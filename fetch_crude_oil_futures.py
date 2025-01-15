@@ -15,7 +15,7 @@ client = db.Historical(os.getenv('DATABENTO_API_KEY'))
 
 # Define parameters
 dataset = "GLBX.MDP3"  # CME Globex MDP 3.0
-symbols = ["CLG5"]  # Crude Oil Future March 2025
+symbols = ["CL.n.0", "CL.n.1"]  # Front month and second month continuous contracts
 start = datetime(2024, 1, 1, tzinfo=timezone.utc)
 end = datetime(2025, 1, 1, tzinfo=timezone.utc)
 
@@ -26,16 +26,23 @@ try:
         symbols=symbols,
         schema="ohlcv-1d",
         start=start,
-        end=end
+        end=end,
+        stype_in="continuous"  # Specify continuous contract type
     )
     
-    # Convert to pandas DataFrame first
+    # Convert to pandas DataFrame and ensure ts_event is included
     df = data.to_df()
+    
+    # Convert timestamp to ISO format string
+    df['timestamp'] = df.index.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
     
     # Save to JSON
     output_file = "output.json"
     with open(output_file, 'w') as f:
-        df.to_json(f, orient='records', date_format='iso')
+        # Convert DataFrame to JSON with timestamp
+        json_data = df.to_dict(orient='records')
+        json.dump(json_data, f, indent=2)
+    
     print(f"Data successfully saved to {output_file}")
     
     # Display first few rows
