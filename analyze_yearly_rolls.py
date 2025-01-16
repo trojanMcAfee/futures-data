@@ -5,6 +5,10 @@ import pandas as pd
 from datetime import datetime, timedelta
 import os
 
+# Position parameters
+CONTRACTS = 100
+BARRELS_PER_CONTRACT = 1000
+
 # Read the existing output.json from data directory
 with open('./data/output.json', 'r') as f:
     data = json.load(f)
@@ -56,6 +60,10 @@ months = ['January', 'February', 'March', 'April', 'May', 'June',
 print("\nCrude Oil Futures Roll Periods Analysis - 2024")
 print("=============================================")
 
+total_roll_pnl = 0
+current_position_value = 0
+previous_roll_price = None
+
 for month in months:
     # Get data for the month
     month_data = pivot_df[pivot_df.index.str.startswith('2024-' + str(months.index(month) + 1).zfill(2))]
@@ -70,7 +78,9 @@ for month in months:
         
         # Track dates to identify gaps
         dates = pd.to_datetime(roll_period.index)
+        roll_analysis = None
         
+        # First print all data including gaps
         for i, (idx, row) in enumerate(roll_period.iterrows()):
             spread = row['close_CL.n.1'] - row['close_CL.n.0']
             print(f"{idx}  {int(row['volume_CL.n.0']):9,d}  {int(row['volume_CL.n.1']):9,d}  "
@@ -83,7 +93,42 @@ for month in months:
                 days_diff = (next_date - current_date).days
                 
                 if days_diff > 1:
-                    # Print weekend/holiday gap
                     gap_dates = [(current_date + timedelta(days=x)).strftime('%Y-%m-%d (%A)') 
                                 for x in range(1, days_diff)]
-                    print(f"{'[Gap]:':11} {', '.join(gap_dates)}") 
+                    print(f"{'[Gap]:':11} {', '.join(gap_dates)}")
+            
+            # Store roll analysis if this is the roll day
+            if row['volume_CL.n.1'] > row['volume_CL.n.0'] and roll_analysis is None:
+                roll_day = idx
+                
+                # Calculate position values and P&L
+                sell_price = row['close_CL.n.0']
+                buy_price = row['close_CL.n.1']
+                
+                sell_value = CONTRACTS * BARRELS_PER_CONTRACT * sell_price
+                buy_value = CONTRACTS * BARRELS_PER_CONTRACT * buy_price
+                roll_pnl = sell_value - buy_value
+                
+                if previous_roll_price is None:
+                    previous_roll_price = sell_price
+                
+                # Update running totals
+                total_roll_pnl += roll_pnl
+                current_position_value = buy_value
+                previous_roll_price = buy_price
+                
+                # Store roll analysis
+                roll_analysis = f"\n[Roll Analysis on {roll_day}]\n"
+                roll_analysis += f"Selling {CONTRACTS:,d} contracts at ${sell_price:.2f} = ${sell_value:,.2f}\n"
+                roll_analysis += f"Buying {CONTRACTS:,d} contracts at ${buy_price:.2f} = ${buy_value:,.2f}\n"
+                roll_analysis += f"Roll P&L: ${roll_pnl:,.2f}\n"
+                roll_analysis += f"Market Structure: {'Backwardation' if spread < 0 else 'Contango'}"
+        
+        # Print roll analysis after all data
+        if roll_analysis:
+            print(roll_analysis)
+
+print("\n\nPosition Summary")
+print("================")
+print(f"Total Roll P&L: ${total_roll_pnl:,.2f}")
+print(f"Final Position Value: ${current_position_value:,.2f}") 
