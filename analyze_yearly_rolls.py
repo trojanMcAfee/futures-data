@@ -132,3 +132,25 @@ print("\n\nPosition Summary")
 print("================")
 print(f"Total Roll P&L: ${total_roll_pnl:,.2f}")
 print(f"Final Position Value: ${current_position_value:,.2f}") 
+
+print("\n\nYearly Position Summary")
+print("=====================")
+
+# Calculate initial and final values
+initial_value = CONTRACTS * BARRELS_PER_CONTRACT * 71.32  # First roll price in January
+final_value = current_position_value
+
+# Calculate total return
+total_pnl = final_value - initial_value + total_roll_pnl
+total_return_pct = (total_pnl / initial_value) * 100
+
+# Calculate average roll cost
+avg_roll_cost = total_roll_pnl / 12
+
+print(f"Initial Position Value (Jan 2024): ${initial_value:,.2f}")
+print(f"Final Position Value (Dec 2024): ${final_value:,.2f}")
+print(f"Total Roll P&L: ${total_roll_pnl:,.2f}")
+print(f"Average Monthly Roll Cost: ${avg_roll_cost:,.2f}")
+print(f"Total P&L: ${total_pnl:,.2f}")
+print(f"Total Return: {total_return_pct:.2f}%")
+print(f"Average Roll Cost per Barrel per Month: ${abs(total_roll_pnl/(CONTRACTS * BARRELS_PER_CONTRACT * 12)):.2f}") 
