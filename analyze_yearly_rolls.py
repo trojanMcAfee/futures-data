@@ -142,7 +142,12 @@ final_value = current_position_value
 
 # Calculate total return
 total_pnl = final_value - initial_value + total_roll_pnl
-total_return_pct = (total_pnl / initial_value) * 100
+
+# Calculate T-bills P&L (3% with 1% haircut)
+tbills_pnl = initial_value * 0.03  # 3% return on initial value
+
+# Calculate total return including T-bills
+total_return_with_tbills = ((total_pnl + tbills_pnl) / initial_value) * 100
 
 # Calculate average roll cost
 avg_roll_cost = total_roll_pnl / 12
@@ -151,6 +156,7 @@ print(f"Initial Position Value (Jan 2024): ${initial_value:,.2f}")
 print(f"Final Position Value (Dec 2024): ${final_value:,.2f}")
 print(f"Total Roll P&L: ${total_roll_pnl:,.2f}")
 print(f"Average Monthly Roll Cost: ${avg_roll_cost:,.2f}")
-print(f"Total P&L: ${total_pnl:,.2f}")
-print(f"Total Return: {total_return_pct:.2f}%")
+print(f"T-bills P&L: ${tbills_pnl:,.2f}  # with 1% haircut")
+print(f"Total P&L: ${total_pnl + tbills_pnl:,.2f}")
+print(f"Total Return: {total_return_with_tbills:.2f}%")
 print(f"Average Roll Cost per Barrel per Month: ${abs(total_roll_pnl/(CONTRACTS * BARRELS_PER_CONTRACT * 12)):.2f}") 
