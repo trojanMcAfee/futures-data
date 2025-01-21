@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+# Cross-analyzes a traditional roll strategy and an alternative roll strategy (which consists 
+# of rolling subset of contracts daily on backwardeed markets) for a year.
+
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

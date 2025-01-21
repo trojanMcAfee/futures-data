@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+# Analyzes a position valuation for a year when rolls happen during the roll period. 
+
 import json
 import pandas as pd
 from datetime import datetime, timedelta
