@@ -60,9 +60,8 @@ months = ['January', 'February', 'March', 'April', 'May', 'June',
 print("\nCrude Oil Futures Roll Periods Analysis - 2024")
 print("=============================================")
 
-total_roll_pnl = 0
-current_position_value = 0
-previous_roll_price = None
+position_value = 0
+first_month = True
 
 for month in months:
     # Get data for the month
@@ -101,27 +100,18 @@ for month in months:
             if row['volume_CL.n.1'] > row['volume_CL.n.0'] and roll_analysis is None:
                 roll_day = idx
                 
-                # Calculate position values and P&L
-                sell_price = row['close_CL.n.0']
-                buy_price = row['close_CL.n.1']
+                # Initialize position value in January
+                if first_month:
+                    position_value = CONTRACTS * BARRELS_PER_CONTRACT * row['close_CL.n.0']
+                    initial_position_value = position_value
+                    first_month = False
                 
-                sell_value = CONTRACTS * BARRELS_PER_CONTRACT * sell_price
-                buy_value = CONTRACTS * BARRELS_PER_CONTRACT * buy_price
-                roll_pnl = sell_value - buy_value
-                
-                if previous_roll_price is None:
-                    previous_roll_price = sell_price
-                
-                # Update running totals
-                total_roll_pnl += roll_pnl
-                current_position_value = buy_value
-                previous_roll_price = buy_price
+                # Calculate new position value after roll
+                position_value = CONTRACTS * BARRELS_PER_CONTRACT * row['close_CL.n.1']
                 
                 # Store roll analysis
                 roll_analysis = f"\n[Roll Analysis on {roll_day}]\n"
-                roll_analysis += f"Selling {CONTRACTS:,d} contracts at ${sell_price:.2f} = ${sell_value:,.2f}\n"
-                roll_analysis += f"Buying {CONTRACTS:,d} contracts at ${buy_price:.2f} = ${buy_value:,.2f}\n"
-                roll_analysis += f"Roll P&L: ${roll_pnl:,.2f}\n"
+                roll_analysis += f"Position Value: ${position_value:,.2f}\n"
                 roll_analysis += f"Market Structure: {'Backwardation' if spread < 0 else 'Contango'}"
         
         # Print roll analysis after all data
@@ -130,33 +120,22 @@ for month in months:
 
 print("\n\nPosition Summary")
 print("================")
-print(f"Total Roll P&L: ${total_roll_pnl:,.2f}")
-print(f"Final Position Value: ${current_position_value:,.2f}") 
+print(f"Initial Position Value (Jan 2024): ${initial_position_value:,.2f}")
+print(f"Final Position Value (Dec 2024): ${position_value:,.2f}")
+print(f"Total P&L: ${position_value - initial_position_value:,.2f}")
 
 print("\n\nYearly Position Summary")
 print("=====================")
 
-# Calculate initial and final values
-initial_value = CONTRACTS * BARRELS_PER_CONTRACT * 71.32  # First roll price in January
-final_value = current_position_value
-
-# Calculate total return
-total_pnl = final_value - initial_value + total_roll_pnl
-
 # Calculate T-bills P&L (3% with 1% haircut)
-tbills_pnl = initial_value * 0.03  # 3% return on initial value
+tbills_pnl = initial_position_value * 0.03  # 3% return on initial value
 
 # Calculate total return including T-bills
-total_return_with_tbills = ((total_pnl + tbills_pnl) / initial_value) * 100
+total_return_with_tbills = ((position_value - initial_position_value + tbills_pnl) / initial_position_value) * 100
 
-# Calculate average roll cost
-avg_roll_cost = total_roll_pnl / 12
-
-print(f"Initial Position Value (Jan 2024): ${initial_value:,.2f}")
-print(f"Final Position Value (Dec 2024): ${final_value:,.2f}")
-print(f"Total Roll P&L: ${total_roll_pnl:,.2f}")
-print(f"Average Monthly Roll Cost: ${avg_roll_cost:,.2f}")
+print(f"Initial Position Value (Jan 2024): ${initial_position_value:,.2f}")
+print(f"Final Position Value (Dec 2024): ${position_value:,.2f}")
+print(f"Position P&L: ${position_value - initial_position_value:,.2f}")
 print(f"T-bills P&L: ${tbills_pnl:,.2f}  # with 1% haircut")
-print(f"Total P&L: ${total_pnl + tbills_pnl:,.2f}")
-print(f"Total Return: {total_return_with_tbills:.2f}%")
-print(f"Average Roll Cost per Barrel per Month: ${abs(total_roll_pnl/(CONTRACTS * BARRELS_PER_CONTRACT * 12)):.2f}") 
+print(f"Total P&L: ${position_value - initial_position_value + tbills_pnl:,.2f}")
+print(f"Total Return: {total_return_with_tbills:.2f}%") 
