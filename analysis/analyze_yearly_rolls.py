@@ -2,14 +2,15 @@
 
 # Analyzes a position valuation for a year when rolls happen during the roll period. 
 # Includes a T-bills P&L calculation of 3% (with 1% haircut included)
+# *** THIS GOES ***
 
 import json
 import pandas as pd
 from datetime import datetime, timedelta
 import os
 
-# Position parameters
-CONTRACTS = 100
+# Initial position parameters
+INITIAL_CONTRACTS = 100
 BARRELS_PER_CONTRACT = 1000
 
 # Read the existing output.json from data directory
@@ -63,6 +64,8 @@ months = ['January', 'February', 'March', 'April', 'May', 'June',
 print("\nCrude Oil Futures Roll Periods Analysis - 2024")
 print("=============================================")
 
+# Initialize with starting position
+current_contracts = INITIAL_CONTRACTS
 position_value = 0
 first_month = True
 
@@ -105,16 +108,25 @@ for month in months:
                 
                 # Initialize position value in January
                 if first_month:
-                    position_value = CONTRACTS * BARRELS_PER_CONTRACT * row['close_CL.n.0']
+                    position_value = current_contracts * BARRELS_PER_CONTRACT * row['close_CL.n.0']
                     initial_position_value = position_value
+                    initial_contracts = current_contracts
                     first_month = False
                 
-                # Calculate new position value after roll
-                position_value = CONTRACTS * BARRELS_PER_CONTRACT * row['close_CL.n.1']
+                # Calculate position values and change
+                old_position_value = position_value
+                
+                # Calculate how many contracts we can buy with the money from selling
+                sell_value = current_contracts * BARRELS_PER_CONTRACT * row['close_CL.n.0']
+                current_contracts = sell_value / (BARRELS_PER_CONTRACT * row['close_CL.n.1'])
+                position_value = current_contracts * BARRELS_PER_CONTRACT * row['close_CL.n.1']
+                position_change = position_value - old_position_value
                 
                 # Store roll analysis
                 roll_analysis = f"\n[Roll Analysis on {roll_day}]\n"
+                roll_analysis += f"Contracts After Roll: {current_contracts:.4f}\n"
                 roll_analysis += f"Position Value: ${position_value:,.2f}\n"
+                roll_analysis += f"Position Change: ${position_change:,.2f} ({(position_change/old_position_value)*100:.2f}%)\n"
                 roll_analysis += f"Market Structure: {'Backwardation' if spread < 0 else 'Contango'}"
         
         # Print roll analysis after all data
@@ -123,6 +135,9 @@ for month in months:
 
 print("\n\nPosition Summary")
 print("================")
+print(f"Initial Contracts: {initial_contracts:.4f}")
+print(f"Final Contracts: {current_contracts:.4f}")
+print(f"Contract Change: {current_contracts - initial_contracts:.4f}")
 print(f"Initial Position Value (Jan 2024): ${initial_position_value:,.2f}")
 print(f"Final Position Value (Dec 2024): ${position_value:,.2f}")
 print(f"Total P&L: ${position_value - initial_position_value:,.2f}")
@@ -141,4 +156,4 @@ print(f"Final Position Value (Dec 2024): ${position_value:,.2f}")
 print(f"Position P&L: ${position_value - initial_position_value:,.2f}")
 print(f"T-bills P&L: ${tbills_pnl:,.2f}  # with 1% haircut")
 print(f"Total P&L: ${position_value - initial_position_value + tbills_pnl:,.2f}")
-print(f"Total Return: {total_return_with_tbills:.2f}%") 
+print(f"Total Return: {total_return_with_tbills:.2f}%")

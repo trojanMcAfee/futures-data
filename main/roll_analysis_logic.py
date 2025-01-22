@@ -156,7 +156,9 @@ def analyze_month_rolls(month_name, month_number, data_path='data/output.json', 
         
         results['alternative_strategy'] = {
             'rolls': alternative_rolls,
-            'final_position_value': position_value
+            'final_position_value': position_value,
+            'initial_price': month_data.iloc[0]['close_CL.n.0'],  # Initial price at start of month
+            'final_price': alternative_rolls[-1]['buy_price'] if alternative_rolls else None  # Final price after last roll
         }
         
         if verbose:
