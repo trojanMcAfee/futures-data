@@ -9,6 +9,79 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from main.roll_analysis_logic import analyze_month_rolls
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+from datetime import datetime
+
+def plot_strategy_comparison(monthly_comparison):
+    # Create comparison-charts directory if it doesn't exist
+    charts_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'comparison-charts')
+    os.makedirs(charts_dir, exist_ok=True)
+    
+    strategy_chart_path = os.path.join(charts_dir, 'strategy_comparison.png')
+    performance_chart_path = os.path.join(charts_dir, 'relative_performance.png')
+    
+    # Check if both charts already exist
+    if os.path.exists(strategy_chart_path) and os.path.exists(performance_chart_path):
+        print("\nCharts already exist in 'comparison-charts' directory.")
+        return
+
+    # Create the charts only if they don't exist
+    dates = [datetime.strptime(f"2024-{month}-01", "%Y-%m-%d") for month in range(1, 13)]
+    traditional_values = [data['traditional']['position_value'] for data in monthly_comparison]
+    alternative_values = [data['alternative']['position_value'] for data in monthly_comparison]
+    traditional_contracts = [data['traditional']['contracts'] for data in monthly_comparison]
+    alternative_contracts = [data['alternative']['contracts'] for data in monthly_comparison]
+
+    # First figure: Position Values and Contract Counts
+    plt.figure(figsize=(15, 10))
+    
+    # Position Values subplot
+    plt.subplot(2, 1, 1)
+    plt.plot(dates, traditional_values, 'b-', label='Traditional Strategy')
+    plt.plot(dates, alternative_values, 'r-', label='Alternative Strategy')
+    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%b'))
+    plt.title('Strategy Comparison - 2024')
+    plt.ylabel('Position Value ($)')
+    plt.legend()
+    plt.grid(True)
+    plt.gca().yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'${x:,.0f}'))
+    
+    # Contract Counts subplot
+    plt.subplot(2, 1, 2)
+    plt.plot(dates, traditional_contracts, 'b-', label='Traditional Strategy')
+    plt.plot(dates, alternative_contracts, 'r-', label='Alternative Strategy')
+    plt.axhline(y=100, color='g', linestyle='--', label='Initial Contracts')
+    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%b'))
+    plt.title('Number of Contracts Over Time')
+    plt.ylabel('Number of Contracts')
+    plt.legend()
+    plt.grid(True)
+    
+    plt.tight_layout()
+    plt.savefig(strategy_chart_path)
+    plt.close()
+    
+    # Second figure: Relative Performance
+    plt.figure(figsize=(12, 6))
+    initial_value = traditional_values[0]
+    traditional_relative = [(v - initial_value) / initial_value * 100 for v in traditional_values]
+    alternative_relative = [(v - initial_value) / initial_value * 100 for v in alternative_values]
+    
+    plt.plot(dates, traditional_relative, 'b-', label='Traditional Strategy')
+    plt.plot(dates, alternative_relative, 'r-', label='Alternative Strategy')
+    plt.axhline(y=0, color='g', linestyle='--', label='Initial Value')
+    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%b'))
+    plt.title('Relative Performance - 2024')
+    plt.ylabel('Percentage Change from Initial Value (%)')
+    plt.legend()
+    plt.grid(True)
+    
+    plt.tight_layout()
+    plt.savefig(performance_chart_path)
+    plt.close()
+    
+    print(f"\nCharts have been saved in the 'comparison-charts' directory")
 
 def main():
     # Position parameters
@@ -16,20 +89,9 @@ def main():
     BARRELS_PER_CONTRACT = 1000
     
     # Dictionary of all months
-    months = {
-        1: "January",
-        2: "February",
-        3: "March",
-        4: "April",
-        5: "May",
-        6: "June",
-        7: "July",
-        8: "August",
-        9: "September",
-        10: "October",
-        11: "November",
-        12: "December"
-    }
+    global months
+    months = ['January', 'February', 'March', 'April', 'May', 'June', 
+             'July', 'August', 'September', 'October', 'November', 'December']
     
     # Initialize tracking variables
     monthly_comparison = []
@@ -47,7 +109,7 @@ def main():
     alternative_contracts = INITIAL_CONTRACTS
     
     # Analyze each month
-    for month_num, month_name in months.items():
+    for month_num, month_name in enumerate(months, 1):
         results = analyze_month_rolls(month_name, month_num, verbose=False)
         
         # Get traditional strategy details
@@ -133,6 +195,9 @@ def main():
     print(f"  Alternative: ${worst_month['alternative_value']:,.2f} ({worst_month['alternative_contracts']:.4f} contracts)")
     print(f"  Difference: ${worst_month['alternative_value'] - worst_month['traditional_value']:,.2f}")
     print(f"  Contract Difference: {worst_month['alternative_contracts'] - worst_month['traditional_contracts']:.4f}")
+    
+    # Generate visualization charts
+    plot_strategy_comparison(monthly_comparison)
 
 if __name__ == "__main__":
     main() 
