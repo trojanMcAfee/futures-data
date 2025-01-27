@@ -2,6 +2,8 @@ import json
 from datetime import datetime
 import pandas as pd
 from tabulate import tabulate
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 
 def load_data(file_path):
     with open(file_path, 'r') as f:
@@ -58,31 +60,84 @@ def analyze_continuous_futures(data):
             
             # Store the data
             daily_data.append([
-                date.strftime('%Y-%m-%d'),
-                f"${price:.2f}",
+                date,  # Keep as datetime for plotting
+                price,  # Keep as float for plotting
                 f"${row['volume_CL.n.0']:,.0f}",
                 f"${row['volume_CL.n.1']:,.0f}",
-                "ROLL" if roll_event else ""
+                roll_event
             ])
     
     return daily_data
+
+def plot_continuous_futures(daily_data):
+    # Convert data for plotting
+    dates = [row[0] for row in daily_data]
+    prices = [row[1] for row in daily_data]
+    roll_dates = [row[0] for row in daily_data if row[4]]
+    roll_prices = [row[1] for row in daily_data if row[4]]
+    
+    # Create the plot
+    plt.figure(figsize=(15, 8))
+    
+    # Plot continuous price
+    plt.plot(dates, prices, label='Continuous Future Price', color='blue', linewidth=1)
+    
+    # Plot roll events
+    plt.scatter(roll_dates, roll_prices, color='red', marker='o', 
+                label='Roll Events', zorder=5, s=100)
+    
+    # Customize the plot
+    plt.title('Crude Oil Continuous Futures Price (2024)', fontsize=14, pad=20)
+    plt.xlabel('Date', fontsize=12)
+    plt.ylabel('Price ($)', fontsize=12)
+    
+    # Format x-axis
+    plt.gca().xaxis.set_major_locator(mdates.MonthLocator())
+    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))
+    plt.xticks(rotation=45)
+    
+    # Add grid
+    plt.grid(True, linestyle='--', alpha=0.7)
+    
+    # Add legend
+    plt.legend(loc='upper left')
+    
+    # Adjust layout
+    plt.tight_layout()
+    
+    # Save the plot
+    plt.savefig('continuous_futures_plot.png', dpi=300, bbox_inches='tight')
+    plt.close()
+
+def format_for_table(daily_data):
+    # Convert data for table display
+    return [[date.strftime('%Y-%m-%d'), f"${price:.2f}", vol1, vol2, "ROLL" if roll else ""]
+            for date, price, vol1, vol2, roll in daily_data]
 
 def main():
     data = load_data('../data/output.json')
     daily_data = analyze_continuous_futures(data)
     
+    # Create the plot
+    plot_continuous_futures(daily_data)
+    
+    # Format data for table display
+    table_data = format_for_table(daily_data)
+    
     # Print table
     headers = ["Date", "Price", "Front Vol", "Next Vol", "Event"]
     print("\nContinuous Futures Price Evolution (2024)")
     print("========================================")
-    print(tabulate(daily_data, headers=headers, tablefmt="simple"))
+    print(tabulate(table_data, headers=headers, tablefmt="simple"))
     
     # Print summary
-    roll_days = [row for row in daily_data if row[4] == "ROLL"]
+    roll_days = [row for row in table_data if row[4] == "ROLL"]
     print(f"\nTotal number of rolls: {len(roll_days)}")
     print("\nRoll dates:")
     for roll in roll_days:
         print(f"  {roll[0]}: {roll[1]} (Front Vol: {roll[2]}, Next Vol: {roll[3]})")
+    
+    print("\nPlot has been saved as 'continuous_futures_plot.png'")
 
 if __name__ == "__main__":
     main() 
