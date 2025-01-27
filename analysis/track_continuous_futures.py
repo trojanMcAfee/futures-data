@@ -76,31 +76,49 @@ def plot_continuous_futures(daily_data):
     roll_dates = [row[0] for row in daily_data if row[4]]
     roll_prices = [row[1] for row in daily_data if row[4]]
     
-    # Create the plot
-    plt.figure(figsize=(15, 8))
+    # Calculate daily changes for plotting
+    daily_changes = []
+    for i in range(len(prices)):
+        if i == 0:
+            daily_changes.append(0)  # First day has no change
+        else:
+            pct_change = ((prices[i] - prices[i-1]) / prices[i-1]) * 100
+            daily_changes.append(pct_change)
     
-    # Plot continuous price
-    plt.plot(dates, prices, label='Continuous Future Price', color='blue', linewidth=1)
+    # Create figure with two subplots sharing x-axis
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(15, 12), height_ratios=[2, 1], sharex=True)
     
-    # Plot roll events
-    plt.scatter(roll_dates, roll_prices, color='red', marker='o', 
-                label='Roll Events', zorder=5, s=100)
+    # Top subplot - Price and roll events
+    ax1.plot(dates, prices, label='Continuous Future Price', color='blue', linewidth=1)
+    ax1.scatter(roll_dates, roll_prices, color='red', marker='o', 
+               label='Roll Events', zorder=5, s=100)
     
-    # Customize the plot
-    plt.title('Crude Oil Continuous Futures Price (2024)', fontsize=14, pad=20)
-    plt.xlabel('Date', fontsize=12)
-    plt.ylabel('Price ($)', fontsize=12)
+    # Customize top subplot
+    ax1.set_title('Crude Oil Continuous Futures Price (2024)', fontsize=14, pad=20)
+    ax1.set_ylabel('Price ($)', fontsize=12)
+    ax1.grid(True, linestyle='--', alpha=0.7)
+    ax1.legend(loc='upper left')
     
-    # Format x-axis
-    plt.gca().xaxis.set_major_locator(mdates.MonthLocator())
-    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))
+    # Bottom subplot - Daily changes
+    bars = ax2.bar(dates, daily_changes, width=1, alpha=0.7)
+    
+    # Color the bars based on positive/negative values
+    for bar, change in zip(bars, daily_changes):
+        if change >= 0:
+            bar.set_color('green')
+        else:
+            bar.set_color('red')
+    
+    # Customize bottom subplot
+    ax2.set_xlabel('Date', fontsize=12)
+    ax2.set_ylabel('Daily Change (%)', fontsize=12)
+    ax2.grid(True, linestyle='--', alpha=0.7)
+    ax2.axhline(y=0, color='black', linestyle='-', linewidth=0.5)
+    
+    # Format x-axis for both subplots
+    ax2.xaxis.set_major_locator(mdates.MonthLocator())
+    ax2.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))
     plt.xticks(rotation=45)
-    
-    # Add grid
-    plt.grid(True, linestyle='--', alpha=0.7)
-    
-    # Add legend
-    plt.legend(loc='upper left')
     
     # Adjust layout
     plt.tight_layout()
