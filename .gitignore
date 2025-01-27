@@ -1,0 +1,14 @@
+# Python virtual environment
+myenv_312/
+venv/
+env/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# OS specific
+.DS_Store
+.env
+output.json
