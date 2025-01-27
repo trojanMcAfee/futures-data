@@ -111,8 +111,27 @@ def plot_continuous_futures(daily_data):
 
 def format_for_table(daily_data):
     # Convert data for table display
-    return [[date.strftime('%Y-%m-%d'), f"${price:.2f}", vol1, vol2, "ROLL" if roll else ""]
-            for date, price, vol1, vol2, roll in daily_data]
+    formatted_data = []
+    
+    for i, (date, price, vol1, vol2, roll) in enumerate(daily_data):
+        # Calculate daily percentage change
+        if i > 0:
+            prev_price = daily_data[i-1][1]  # Get previous day's price
+            pct_change = ((price - prev_price) / prev_price) * 100
+            pct_change_str = f"{pct_change:+.2f}%"  # + sign for positive changes
+        else:
+            pct_change_str = "N/A"  # First day has no previous price
+            
+        formatted_data.append([
+            date.strftime('%Y-%m-%d'),
+            f"${price:.2f}",
+            vol1,
+            vol2,
+            "ROLL" if roll else "",
+            pct_change_str
+        ])
+    
+    return formatted_data
 
 def main():
     data = load_data('../data/output.json')
@@ -125,7 +144,7 @@ def main():
     table_data = format_for_table(daily_data)
     
     # Print table
-    headers = ["Date", "Price", "Front Vol", "Next Vol", "Event"]
+    headers = ["Date", "Price", "Front Vol", "Next Vol", "Event", "Daily Change"]
     print("\nContinuous Futures Price Evolution (2024)")
     print("========================================")
     print(tabulate(table_data, headers=headers, tablefmt="simple"))
