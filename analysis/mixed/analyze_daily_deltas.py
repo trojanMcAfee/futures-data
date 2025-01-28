@@ -1,77 +1,15 @@
-import json
-from datetime import datetime
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
-from pathlib import Path
 import numpy as np
+import sys
+from pathlib import Path
 
-def load_data(file_path):
-    with open(file_path, 'r') as f:
-        return json.load(f)
+# Add main directory to Python path
+sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 
-def get_spot_data():
-    spot_data_path = Path("data/spot_data.json")
-    if not spot_data_path.exists():
-        print("Error: spot_data.json not found.")
-        return None
-    
-    data = load_data(spot_data_path)
-    spot_data = []
-    
-    for item in data['response']['data']:
-        if (item.get('product-name') == 'WTI Crude Oil' and 
-            item.get('process-name') == 'Spot Price FOB'):
-            spot_data.append({
-                'date': pd.to_datetime(item['period']),
-                'price': float(item['value'])
-            })
-    
-    df_spot = pd.DataFrame(spot_data)
-    if not df_spot.empty:
-        df_spot = df_spot.sort_values('date')
-        df_spot['daily_change'] = df_spot['price'].pct_change() * 100
-    
-    return df_spot
-
-def get_futures_data():
-    futures_data_path = Path("data/output.json")
-    if not futures_data_path.exists():
-        print("Error: output.json not found.")
-        return None
-    
-    data = load_data(futures_data_path)
-    df = pd.DataFrame(data)
-    df['timestamp'] = pd.to_datetime(df['timestamp'])
-    df['date'] = df['timestamp'].dt.strftime('%Y-%m-%d')
-    
-    pivot_df = df.pivot(index='date', columns='symbol', 
-                       values=['volume', 'close'])
-    pivot_df.columns = [f"{col[0]}_{col[1]}" for col in pivot_df.columns]
-    pivot_df = pivot_df.sort_index()
-    pivot_df.index = pd.to_datetime(pivot_df.index)
-    
-    futures_data = []
-    current_contract = 'front'
-    
-    for date, row in pivot_df.iterrows():
-        if pd.isna(row['volume_CL.n.0']) or pd.isna(row['volume_CL.n.1']):
-            continue
-        
-        if current_contract == 'front' and row['volume_CL.n.1'] > row['volume_CL.n.0']:
-            current_contract = 'next'
-        
-        price = row['close_CL.n.0'] if current_contract == 'front' else row['close_CL.n.1']
-        futures_data.append({
-            'date': date,
-            'price': price
-        })
-    
-    df_futures = pd.DataFrame(futures_data)
-    if not df_futures.empty:
-        df_futures['daily_change'] = df_futures['price'].pct_change() * 100
-    
-    return df_futures
+from main.spot_analysis_logic import get_spot_data
+from main.futures_analysis_logic import get_futures_data
 
 def analyze_deltas(df_spot, df_futures):
     # Merge spot and futures data on date
@@ -87,6 +25,15 @@ def analyze_deltas(df_spot, df_futures):
     return df_merged
 
 def plot_deltas(df_merged):
+    # Get plot path relative to the script location
+    script_dir = Path(__file__).resolve().parent
+    plot_path = script_dir / 'daily_deltas_analysis.png'
+    
+    # Check if plot already exists
+    if plot_path.exists():
+        print("\nPlot already exists at:", plot_path)
+        return
+    
     plt.style.use('seaborn-v0_8-whitegrid')
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(15, 12), height_ratios=[2, 1])
     
@@ -133,7 +80,10 @@ def plot_deltas(df_merged):
     plt.setp(ax1.get_xticklabels(), rotation=45)
     
     plt.tight_layout()
-    plt.savefig('daily_deltas_analysis.png', dpi=300, bbox_inches='tight')
+    
+    # Save the plot
+    plt.savefig(plot_path, dpi=300, bbox_inches='tight')
+    print("\nPlot has been saved at:", plot_path)
     plt.close()
 
 def main():

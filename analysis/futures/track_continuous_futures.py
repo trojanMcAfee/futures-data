@@ -1,103 +1,31 @@
-import json
-from datetime import datetime
 import pandas as pd
 from tabulate import tabulate
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
-import os
+import sys
+from pathlib import Path
 
-def load_data(file_path):
-    # Get the directory where this script is located
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    # Construct absolute path to the data file
-    abs_file_path = os.path.join(script_dir, '..', '..', 'data', 'output.json')
-    with open(abs_file_path, 'r') as f:
-        return json.load(f)
+# Add main directory to Python path
+sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 
-def analyze_continuous_futures(data):
-    # Convert to DataFrame
-    df = pd.DataFrame(data)
-    
-    # Convert timestamp to datetime
-    df['timestamp'] = pd.to_datetime(df['timestamp'])
-    df['month'] = df['timestamp'].dt.strftime('%B')
-    df['date'] = df['timestamp'].dt.strftime('%Y-%m-%d')
-    
-    # Create pivot table for volumes and prices
-    pivot_df = df.pivot(index='date', columns='symbol', 
-                       values=['volume', 'close'])
-    
-    # Flatten column names
-    pivot_df.columns = [f"{col[0]}_{col[1]}" for col in pivot_df.columns]
-    
-    # Sort by date
-    pivot_df = pivot_df.sort_index()
-    pivot_df.index = pd.to_datetime(pivot_df.index)
-    
-    # Group by month
-    monthly_groups = pivot_df.groupby(pivot_df.index.strftime('%Y-%m'))
-    
-    # Track continuous price and rolls
-    daily_data = []
-    current_contract = 'front'  # Start with front month
-    
-    for month, month_data in monthly_groups:
-        # Reset contract to front at the start of each month
-        current_contract = 'front'
-        roll_happened = False
-        
-        for date, row in month_data.iterrows():
-            # Skip if we don't have both volume values
-            if pd.isna(row['volume_CL.n.0']) or pd.isna(row['volume_CL.n.1']):
-                continue
-                
-            # Check for roll condition
-            roll_event = False
-            if not roll_happened and current_contract == 'front':
-                # Check if next month volume is higher
-                if row['volume_CL.n.1'] > row['volume_CL.n.0']:
-                    roll_event = True
-                    roll_happened = True
-                    current_contract = 'next'
-            
-            # Get price from the current contract
-            price = row['close_CL.n.0'] if current_contract == 'front' else row['close_CL.n.1']
-            
-            # Store the data
-            daily_data.append([
-                date,  # Keep as datetime for plotting
-                price,  # Keep as float for plotting
-                f"${row['volume_CL.n.0']:,.0f}",
-                f"${row['volume_CL.n.1']:,.0f}",
-                roll_event
-            ])
-    
-    return daily_data
+from main.futures_analysis_logic import get_futures_data
 
-def plot_continuous_futures(daily_data):
-    # Get the directory where this script is located
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    plot_path = os.path.join(script_dir, 'continuous_futures_plot.png')
+def plot_continuous_futures(df_futures):
+    # Get plot path relative to the script location
+    script_dir = Path(__file__).resolve().parent
+    plot_path = script_dir / 'continuous_futures_plot.png'
     
     # Check if plot already exists
-    if os.path.exists(plot_path):
+    if plot_path.exists():
         print("\nPlot already exists at:", plot_path)
         return
     
-    # Convert data for plotting
-    dates = [row[0] for row in daily_data]
-    prices = [row[1] for row in daily_data]
-    roll_dates = [row[0] for row in daily_data if row[4]]
-    roll_prices = [row[1] for row in daily_data if row[4]]
-    
-    # Calculate daily changes for plotting
-    daily_changes = []
-    for i in range(len(prices)):
-        if i == 0:
-            daily_changes.append(0)  # First day has no change
-        else:
-            pct_change = ((prices[i] - prices[i-1]) / prices[i-1]) * 100
-            daily_changes.append(pct_change)
+    # Get data for plotting
+    dates = df_futures['date']
+    prices = df_futures['price']
+    roll_dates = df_futures[df_futures['roll_event']]['date']
+    roll_prices = df_futures[df_futures['roll_event']]['price']
+    daily_changes = df_futures['daily_change']
     
     # Create figure with two subplots sharing x-axis
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(15, 12), height_ratios=[2, 1], sharex=True)
@@ -137,44 +65,36 @@ def plot_continuous_futures(daily_data):
     # Adjust layout
     plt.tight_layout()
     
-    # Save the plot in the futures directory
+    # Save the plot
     plt.savefig(plot_path, dpi=300, bbox_inches='tight')
     print("\nPlot has been saved at:", plot_path)
     plt.close()
 
-def format_for_table(daily_data):
-    # Convert data for table display
-    formatted_data = []
-    
-    for i, (date, price, vol1, vol2, roll) in enumerate(daily_data):
-        # Calculate daily percentage change
-        if i > 0:
-            prev_price = daily_data[i-1][1]  # Get previous day's price
-            pct_change = ((price - prev_price) / prev_price) * 100
-            pct_change_str = f"{pct_change:+.2f}%"  # + sign for positive changes
-        else:
-            pct_change_str = "N/A"  # First day has no previous price
-            
-        formatted_data.append([
-            date.strftime('%Y-%m-%d'),
-            f"${price:.2f}",
-            vol1,
-            vol2,
-            "ROLL" if roll else "",
-            pct_change_str
+def format_for_table(df_futures):
+    table_data = []
+    for _, row in df_futures.iterrows():
+        table_data.append([
+            row['date'].strftime('%Y-%m-%d'),
+            f"${row['price']:.2f}",
+            f"${row['volume_front']:,.0f}",
+            f"${row['volume_next']:,.0f}",
+            "ROLL" if row['roll_event'] else "",
+            f"{row['daily_change']:+.2f}%" if pd.notna(row['daily_change']) else "N/A"
         ])
-    
-    return formatted_data
+    return table_data
 
 def main():
-    data = load_data('output.json')
-    daily_data = analyze_continuous_futures(data)
+    # Get futures data using the new module
+    df_futures = get_futures_data()
+    
+    if df_futures is None:
+        return
     
     # Create the plot
-    plot_continuous_futures(daily_data)
+    plot_continuous_futures(df_futures)
     
     # Format data for table display
-    table_data = format_for_table(daily_data)
+    table_data = format_for_table(df_futures)
     
     # Print table
     headers = ["Date", "Price", "Front Vol", "Next Vol", "Event", "Daily Change"]
@@ -183,11 +103,12 @@ def main():
     print(tabulate(table_data, headers=headers, tablefmt="simple"))
     
     # Print summary
-    roll_days = [row for row in table_data if row[4] == "ROLL"]
-    print(f"\nTotal number of rolls: {len(roll_days)}")
+    roll_events = df_futures[df_futures['roll_event']]
+    print(f"\nTotal number of rolls: {len(roll_events)}")
     print("\nRoll dates:")
-    for roll in roll_days:
-        print(f"  {roll[0]}: {roll[1]} (Front Vol: {roll[2]}, Next Vol: {roll[3]})")
+    for _, row in roll_events.iterrows():
+        print(f"  {row['date'].strftime('%Y-%m-%d')}: ${row['price']:.2f} "
+              f"(Front Vol: ${row['volume_front']:,.0f}, Next Vol: ${row['volume_next']:,.0f})")
 
 if __name__ == "__main__":
     main() 

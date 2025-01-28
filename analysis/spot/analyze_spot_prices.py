@@ -1,52 +1,14 @@
-import json
-from datetime import datetime
 import pandas as pd
 from tabulate import tabulate
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+import sys
 from pathlib import Path
 
-def load_data(file_path):
-    with open(file_path, 'r') as f:
-        return json.load(f)
+# Add main directory to Python path
+sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 
-def filter_wti_data(data):
-    # Filter for WTI Crude Oil and Spot Price FOB
-    wti_data = []
-    for item in data['response']['data']:
-        if (item.get('product-name') == 'WTI Crude Oil' and 
-            item.get('process-name') == 'Spot Price FOB'):
-            wti_data.append({
-                'date': item['period'],
-                'price': item['value']
-            })
-    
-    return wti_data
-
-def analyze_spot_prices(wti_data):
-    # Convert to DataFrame
-    df = pd.DataFrame(wti_data)
-    
-    # Convert date string to datetime and price to float
-    df['date'] = pd.to_datetime(df['date'])
-    df['price'] = pd.to_numeric(df['price'], errors='coerce')
-    
-    # Sort by date
-    df = df.sort_values('date')
-    
-    # Calculate daily percentage changes
-    df['daily_change'] = df['price'].pct_change() * 100
-    
-    # Format the data for display
-    daily_data = []
-    for _, row in df.iterrows():
-        daily_data.append([
-            row['date'],
-            row['price'],
-            f"{row['daily_change']:+.2f}%" if pd.notna(row['daily_change']) else "N/A"
-        ])
-    
-    return daily_data
+from main.spot_analysis_logic import get_spot_data
 
 def plot_spot_prices(daily_data):
     # Convert data for plotting
@@ -59,7 +21,7 @@ def plot_spot_prices(daily_data):
         if i == 0:
             daily_changes.append(0)  # First day has no change
         else:
-            pct_change = ((prices[i] - prices[i-1]) / prices[i-1]) * 100
+            pct_change = ((prices[i] - prices[i-1]) / prices[i-1]) * 100 if prices[i-1] != 0 else 0
             daily_changes.append(pct_change)
     
     # Create figure with two subplots sharing x-axis
@@ -110,23 +72,20 @@ def format_for_table(daily_data):
     ] for date, price, change in daily_data]
 
 def main():
-    # Load the spot data
-    data_path = Path("data/spot_data.json")
-    if not data_path.exists():
-        print("Error: spot_data.json not found. Please run fetch_eia_data.py first.")
+    # Get spot data using the new module
+    df_spot = get_spot_data()
+    
+    if df_spot is None:
         return
     
-    data = load_data(data_path)
-    
-    # Filter WTI data
-    wti_data = filter_wti_data(data)
-    
-    if not wti_data:
-        print("No WTI spot price data found in the specified date range.")
-        return
-    
-    # Analyze the data
-    daily_data = analyze_spot_prices(wti_data)
+    # Format data for display
+    daily_data = []
+    for _, row in df_spot.iterrows():
+        daily_data.append([
+            row['date'],
+            row['price'],
+            f"{row['daily_change']:+.2f}%" if pd.notna(row['daily_change']) else "N/A"
+        ])
     
     # Create the plot
     plot_spot_prices(daily_data)
