@@ -88,6 +88,9 @@ def get_futures_data():
     return df_futures
 
 def plot_comparison(df_spot, df_futures):
+    # Set style for better visibility
+    plt.style.use('seaborn-v0_8-whitegrid')
+    
     # Create figure with two subplots sharing x-axis
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(15, 12), height_ratios=[2, 1], sharex=True)
     
@@ -103,35 +106,52 @@ def plot_comparison(df_spot, df_futures):
     ax1.grid(True, linestyle='--', alpha=0.7)
     ax1.legend(loc='upper left')
     
+    # Set y-axis limits with some padding
+    ymin = min(df_spot['price'].min(), df_futures['price'].min())
+    ymax = max(df_spot['price'].max(), df_futures['price'].max())
+    padding = (ymax - ymin) * 0.05
+    ax1.set_ylim(ymin - padding, ymax + padding)
+    
     # Bottom subplot - Daily changes
-    # Calculate bar width to avoid overlap
-    width = 0.35
+    # Calculate bar width to avoid overlap but ensure visibility
+    width = 0.4  # Increased width for better visibility
     
     # Create bars for spot prices (left position)
-    spot_bars = ax2.bar(df_spot['date'] - pd.Timedelta(days=width), 
-                       df_spot['daily_change'], 
-                       width=width, alpha=0.7, label='Spot Daily Change')
+    spot_mask_pos = df_spot['daily_change'] >= 0
+    spot_mask_neg = df_spot['daily_change'] < 0
+    
+    ax2.bar(df_spot.loc[spot_mask_pos, 'date'] - pd.Timedelta(days=width/2), 
+            df_spot.loc[spot_mask_pos, 'daily_change'], 
+            width=width, alpha=0.7, color='#2ecc71', label='Spot Positive Change')
+    ax2.bar(df_spot.loc[spot_mask_neg, 'date'] - pd.Timedelta(days=width/2), 
+            df_spot.loc[spot_mask_neg, 'daily_change'], 
+            width=width, alpha=0.7, color='#e74c3c', label='Spot Negative Change')
     
     # Create bars for futures prices (right position)
-    futures_bars = ax2.bar(df_futures['date'] + pd.Timedelta(days=width), 
-                          df_futures['daily_change'], 
-                          width=width, alpha=0.7, label='Futures Daily Change')
+    futures_mask_pos = df_futures['daily_change'] >= 0
+    futures_mask_neg = df_futures['daily_change'] < 0
     
-    # Color the bars based on positive/negative values
-    for bars, color_pos, color_neg in [(spot_bars, '#2ecc71', '#e74c3c'), 
-                                      (futures_bars, '#3498db', '#9b59b6')]:
-        for bar in bars:
-            if bar.get_height() >= 0:
-                bar.set_color(color_pos)
-            else:
-                bar.set_color(color_neg)
+    ax2.bar(df_futures.loc[futures_mask_pos, 'date'] + pd.Timedelta(days=width/2), 
+            df_futures.loc[futures_mask_pos, 'daily_change'], 
+            width=width, alpha=0.7, color='#3498db', label='Futures Positive Change')
+    ax2.bar(df_futures.loc[futures_mask_neg, 'date'] + pd.Timedelta(days=width/2), 
+            df_futures.loc[futures_mask_neg, 'daily_change'], 
+            width=width, alpha=0.7, color='#9b59b6', label='Futures Negative Change')
     
     # Customize bottom subplot
     ax2.set_xlabel('Date', fontsize=12)
     ax2.set_ylabel('Daily Change (%)', fontsize=12)
     ax2.grid(True, linestyle='--', alpha=0.7)
     ax2.axhline(y=0, color='black', linestyle='-', linewidth=0.5)
-    ax2.legend(loc='upper left')
+    
+    # Set y-axis limits for daily changes with some padding
+    ymin = min(df_spot['daily_change'].min(), df_futures['daily_change'].min())
+    ymax = max(df_spot['daily_change'].max(), df_futures['daily_change'].max())
+    padding = (ymax - ymin) * 0.05
+    ax2.set_ylim(ymin - padding, ymax + padding)
+    
+    # Improve legend
+    ax2.legend(loc='upper left', ncol=2, bbox_to_anchor=(0, -0.15))
     
     # Format x-axis for both subplots
     ax2.xaxis.set_major_locator(mdates.MonthLocator())
@@ -141,7 +161,7 @@ def plot_comparison(df_spot, df_futures):
     # Adjust layout
     plt.tight_layout()
     
-    # Save the plot
+    # Save the plot with high quality
     plt.savefig('spot_futures_comparison.png', dpi=300, bbox_inches='tight')
     plt.close()
 
