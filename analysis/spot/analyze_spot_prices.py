@@ -111,7 +111,7 @@ def format_for_table(daily_data):
 
 def main():
     # Load the spot data
-    data_path = Path("../../data/spot_data.json")
+    data_path = Path("data/spot_data.json")
     if not data_path.exists():
         print("Error: spot_data.json not found. Please run fetch_eia_data.py first.")
         return

@@ -11,7 +11,7 @@ def load_data(file_path):
         return json.load(f)
 
 def get_spot_data():
-    spot_data_path = Path("../../data/spot_data.json")
+    spot_data_path = Path("data/spot_data.json")
     if not spot_data_path.exists():
         print("Error: spot_data.json not found.")
         return None
@@ -35,7 +35,7 @@ def get_spot_data():
     return df_spot
 
 def get_futures_data():
-    futures_data_path = Path("../../data/output.json")
+    futures_data_path = Path("data/output.json")
     if not futures_data_path.exists():
         print("Error: output.json not found.")
         return None
