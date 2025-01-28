@@ -4,9 +4,14 @@ import pandas as pd
 from tabulate import tabulate
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+import os
 
 def load_data(file_path):
-    with open(file_path, 'r') as f:
+    # Get the directory where this script is located
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    # Construct absolute path to the data file
+    abs_file_path = os.path.join(script_dir, '..', '..', 'data', 'output.json')
+    with open(abs_file_path, 'r') as f:
         return json.load(f)
 
 def analyze_continuous_futures(data):
@@ -70,6 +75,15 @@ def analyze_continuous_futures(data):
     return daily_data
 
 def plot_continuous_futures(daily_data):
+    # Get the directory where this script is located
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    plot_path = os.path.join(script_dir, 'continuous_futures_plot.png')
+    
+    # Check if plot already exists
+    if os.path.exists(plot_path):
+        print("\nPlot already exists at:", plot_path)
+        return
+    
     # Convert data for plotting
     dates = [row[0] for row in daily_data]
     prices = [row[1] for row in daily_data]
@@ -123,8 +137,9 @@ def plot_continuous_futures(daily_data):
     # Adjust layout
     plt.tight_layout()
     
-    # Save the plot
-    plt.savefig('continuous_futures_plot.png', dpi=300, bbox_inches='tight')
+    # Save the plot in the futures directory
+    plt.savefig(plot_path, dpi=300, bbox_inches='tight')
+    print("\nPlot has been saved at:", plot_path)
     plt.close()
 
 def format_for_table(daily_data):
@@ -152,7 +167,7 @@ def format_for_table(daily_data):
     return formatted_data
 
 def main():
-    data = load_data('../data/output.json')
+    data = load_data('output.json')
     daily_data = analyze_continuous_futures(data)
     
     # Create the plot
@@ -173,8 +188,6 @@ def main():
     print("\nRoll dates:")
     for roll in roll_days:
         print(f"  {roll[0]}: {roll[1]} (Front Vol: {roll[2]}, Next Vol: {roll[3]})")
-    
-    print("\nPlot has been saved as 'continuous_futures_plot.png'")
 
 if __name__ == "__main__":
     main() 
