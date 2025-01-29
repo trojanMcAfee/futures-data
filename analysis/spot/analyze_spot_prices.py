@@ -11,6 +11,15 @@ sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from main.spot_analysis_logic import get_spot_data
 
 def plot_spot_prices(daily_data):
+    # Get plot path relative to the script location
+    script_dir = Path(__file__).resolve().parent
+    plot_path = script_dir / 'spot_prices_plot.png'
+    
+    # Check if plot already exists
+    if plot_path.exists():
+        print("\nPlot already exists at:", plot_path)
+        return
+    
     # Convert data for plotting
     dates = [row[0] for row in daily_data]
     prices = [row[1] for row in daily_data]
@@ -61,7 +70,8 @@ def plot_spot_prices(daily_data):
     plt.tight_layout()
     
     # Save the plot
-    plt.savefig('spot_prices_plot.png', dpi=300, bbox_inches='tight')
+    plt.savefig(plot_path, dpi=300, bbox_inches='tight')
+    print("\nPlot has been saved at:", plot_path)
     plt.close()
 
 def format_for_table(daily_data):
