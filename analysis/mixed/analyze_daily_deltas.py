@@ -5,6 +5,16 @@ import numpy as np
 import sys
 from pathlib import Path
 
+"""
+Conditions for identifying significant futures-driven divergences:
+1. Magnitude: Futures price move must exceed 1.5% (abs)
+2. Dominance: Futures move must be at least 1.5x larger than spot move
+3. Separation: The absolute difference between futures and spot moves must exceed 1.0%
+
+All three conditions must be met simultaneously to flag an event as futures-driven.
+This ensures we only highlight cases where futures markets are clearly leading price action.
+"""
+
 # Add main directory to Python path
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 
@@ -22,14 +32,19 @@ def analyze_deltas(df_spot, df_futures):
     # Calculate the delta between futures and spot changes
     df_merged['delta'] = df_merged['futures_change'] - df_merged['spot_change']
     
-    # Mark deltas where futures change was the dominant factor
+    # Calculate the ratio of futures to spot change
+    df_merged['change_ratio'] = abs(df_merged['futures_change']) / abs(df_merged['spot_change'].replace(0, float('nan')))
+    
+    # Mark deltas where futures change was the dominant factor with more stringent conditions
     df_merged['futures_driven'] = (
-        # Futures move must be significant (>1%)
-        (abs(df_merged['futures_change']) > 1.0) & 
+        # Futures move must be more significant (>1.5%)
+        (abs(df_merged['futures_change']) > 1.5) & 
         # Futures move must be larger than spot move
         (abs(df_merged['futures_change']) > abs(df_merged['spot_change'])) &
-        # The difference must be meaningful (>0.5%)
-        (abs(df_merged['futures_change'] - df_merged['spot_change']) > 0.5)
+        # The absolute difference must be more meaningful (>1.0%)
+        (abs(df_merged['futures_change'] - df_merged['spot_change']) > 1.0) &
+        # Futures change should be at least 1.5x the spot change
+        (df_merged['change_ratio'] > 1.5)
     )
     
     return df_merged
@@ -122,7 +137,7 @@ def main():
     plot_deltas(df_merged)
     
     # Get futures-driven events
-    futures_driven = df_merged[df_merged['futures_driven']].sort_values('delta', ascending=False)
+    futures_driven = df_merged[df_merged['futures_driven']]
     
     # Print summary statistics for futures-driven events
     print("\nFutures-Driven Divergence Analysis:")
@@ -130,16 +145,24 @@ def main():
     print(f"Number of significant futures-driven events: {len(futures_driven)}")
     print(f"Mean Futures Change: {futures_driven['futures_change'].mean():.2f}%")
     print(f"Std Dev of Futures Changes: {futures_driven['futures_change'].std():.2f}%")
-    print(f"Max Futures Change: {futures_driven['futures_change'].max():.2f}%")
-    print(f"Min Futures Change: {futures_driven['futures_change'].min():.2f}%")
+    print(f"Max Absolute Futures Change: {abs(futures_driven['futures_change']).max():.2f}%")
+    print(f"Max Absolute Delta: {abs(futures_driven['delta']).max():.2f}%")
     
-    # Print the dates with largest futures-driven divergences
-    print("\nLargest Futures-Driven Divergences:")
-    for _, row in futures_driven.head().iterrows():
+    # Print the dates with largest absolute deltas between futures and spot
+    print("\nLargest Absolute Divergences (|Futures - Spot|):")
+    for _, row in futures_driven.sort_values('delta', key=abs, ascending=False).head().iterrows():
         print(f"\nDate: {row['date'].strftime('%Y-%m-%d')}")
         print(f"Futures Change: {row['futures_change']:.2f}%")
         print(f"Spot Change: {row['spot_change']:.2f}%")
-        print(f"Net Delta: {row['delta']:.2f}%")
+        print(f"Absolute Divergence: {abs(row['delta']):.2f}%")
+    
+    # Print the dates with largest absolute futures moves
+    print("\nLargest Raw Futures Moves (|Futures Change|):")
+    for _, row in futures_driven.sort_values('futures_change', key=abs, ascending=False).head().iterrows():
+        print(f"\nDate: {row['date'].strftime('%Y-%m-%d')}")
+        print(f"Futures Change: {row['futures_change']:.2f}%")
+        print(f"Spot Change: {row['spot_change']:.2f}%")
+        print(f"Absolute Futures Move: {abs(row['futures_change']):.2f}%")
 
 if __name__ == "__main__":
     main() 
