@@ -22,6 +22,16 @@ def analyze_deltas(df_spot, df_futures):
     # Calculate the delta between futures and spot changes
     df_merged['delta'] = df_merged['futures_change'] - df_merged['spot_change']
     
+    # Mark deltas where futures change was the dominant factor
+    df_merged['futures_driven'] = (
+        # Futures move must be significant (>1%)
+        (abs(df_merged['futures_change']) > 1.0) & 
+        # Futures move must be larger than spot move
+        (abs(df_merged['futures_change']) > abs(df_merged['spot_change'])) &
+        # The difference must be meaningful (>0.5%)
+        (abs(df_merged['futures_change'] - df_merged['spot_change']) > 0.5)
+    )
+    
     return df_merged
 
 def plot_deltas(df_merged):
@@ -35,50 +45,61 @@ def plot_deltas(df_merged):
         return
     
     plt.style.use('seaborn-v0_8-whitegrid')
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(15, 12), height_ratios=[2, 1])
+    # Increase figure width for better x-axis spacing
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(20, 12), height_ratios=[2, 1])
     
-    # Top subplot: Delta evolution over time with zero line
-    ax1.plot(df_merged['date'], df_merged['delta'], 
-             color='blue', linewidth=1.5, label='Daily Delta')
-    ax1.axhline(y=0, color='red', linestyle='--', alpha=0.7)
+    # Filter for futures-driven events
+    futures_driven_data = df_merged[df_merged['futures_driven']]
     
-    # Add bands for standard deviation
-    std_dev = df_merged['delta'].std()
-    mean = df_merged['delta'].mean()
+    # Top subplot: Futures deviation from spot
+    ax1.plot(df_merged['date'], df_merged['futures_change'], 
+             color='blue', linewidth=1.5, label='Futures Daily Change')
+    ax1.plot(df_merged['date'], df_merged['spot_change'], 
+             color='red', linewidth=1.5, label='Spot Daily Change')
+    
+    # Highlight futures-driven divergences
+    ax1.scatter(futures_driven_data['date'], futures_driven_data['futures_change'],
+                color='yellow', s=100, zorder=5, alpha=0.5,
+                label='Futures-Driven Divergence')
+    
+    # Add bands for standard deviation of futures-driven events
+    std_dev = futures_driven_data['futures_change'].std()
+    mean = futures_driven_data['futures_change'].mean()
     ax1.axhline(y=mean + std_dev, color='gray', linestyle=':', alpha=0.5, 
-                label='±1 Std Dev')
+                label='±1 Std Dev (Futures)')
     ax1.axhline(y=mean - std_dev, color='gray', linestyle=':', alpha=0.5)
-    ax1.fill_between(df_merged['date'], 
-                     mean - std_dev, mean + std_dev, 
-                     color='gray', alpha=0.1)
     
-    ax1.set_title('Delta Between Futures and Spot Daily Changes (2024)', 
+    ax1.set_title('Futures vs Spot Daily Changes (2024)\nHighlighting Futures-Driven Divergences', 
                   fontsize=14, pad=20)
-    ax1.set_ylabel('Delta (%)', fontsize=12)
-    ax1.grid(True, linestyle='--', alpha=0.7)
+    ax1.set_ylabel('Daily Change (%)', fontsize=12)
+    ax1.grid(True, which='major', linestyle='--', alpha=0.7)
     ax1.legend(loc='upper left')
     
-    # Bottom subplot: Histogram of deltas
-    n, bins, patches = ax2.hist(df_merged['delta'], bins=30, 
+    # Customize x-axis for better spacing
+    # Use WeekdayLocator for major ticks (Mondays) and format with date
+    ax1.xaxis.set_major_locator(mdates.WeekdayLocator(byweekday=mdates.MO))
+    ax1.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+    
+    # Bottom subplot: Histogram of futures-driven divergences
+    n, bins, patches = ax2.hist(futures_driven_data['futures_change'], bins=30, 
                                color='blue', alpha=0.7)
     
-    # Add vertical lines for mean and std dev
+    # Add vertical lines for mean and std dev of futures-driven events
     ax2.axvline(x=mean, color='red', linestyle='--', 
                 label=f'Mean: {mean:.2f}%')
     ax2.axvline(x=mean + std_dev, color='gray', linestyle=':', 
                 label=f'Std Dev: ±{std_dev:.2f}%')
     ax2.axvline(x=mean - std_dev, color='gray', linestyle=':', alpha=0.7)
     
-    ax2.set_xlabel('Delta (%)', fontsize=12)
+    ax2.set_xlabel('Futures Daily Change (%)', fontsize=12)
     ax2.set_ylabel('Frequency', fontsize=12)
     ax2.grid(True, linestyle='--', alpha=0.7)
     ax2.legend(loc='upper left')
     
-    # Format x-axis for top subplot
-    ax1.xaxis.set_major_locator(mdates.MonthLocator())
-    ax1.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))
-    plt.setp(ax1.get_xticklabels(), rotation=45)
+    # Format x-axis labels for readability
+    plt.setp(ax1.get_xticklabels(), rotation=45, ha='right')
     
+    # Adjust layout with more space for x-axis labels
     plt.tight_layout()
     
     # Save the plot
@@ -100,24 +121,25 @@ def main():
     # Create visualization
     plot_deltas(df_merged)
     
-    # Print summary statistics
-    print("\nDelta Analysis Summary:")
-    print("=====================")
-    print(f"Mean Delta: {df_merged['delta'].mean():.2f}%")
-    print(f"Median Delta: {df_merged['delta'].median():.2f}%")
-    print(f"Standard Deviation: {df_merged['delta'].std():.2f}%")
-    print(f"Max Delta: {df_merged['delta'].max():.2f}%")
-    print(f"Min Delta: {df_merged['delta'].min():.2f}%")
+    # Get futures-driven events
+    futures_driven = df_merged[df_merged['futures_driven']].sort_values('delta', ascending=False)
     
-    # Print the dates with largest absolute deltas
-    print("\nDates with Largest Absolute Deltas:")
-    df_merged['abs_delta'] = df_merged['delta'].abs()
-    top_deltas = df_merged.nlargest(5, 'abs_delta')
-    for _, row in top_deltas.iterrows():
+    # Print summary statistics for futures-driven events
+    print("\nFutures-Driven Divergence Analysis:")
+    print("=================================")
+    print(f"Number of significant futures-driven events: {len(futures_driven)}")
+    print(f"Mean Futures Change: {futures_driven['futures_change'].mean():.2f}%")
+    print(f"Std Dev of Futures Changes: {futures_driven['futures_change'].std():.2f}%")
+    print(f"Max Futures Change: {futures_driven['futures_change'].max():.2f}%")
+    print(f"Min Futures Change: {futures_driven['futures_change'].min():.2f}%")
+    
+    # Print the dates with largest futures-driven divergences
+    print("\nLargest Futures-Driven Divergences:")
+    for _, row in futures_driven.head().iterrows():
         print(f"\nDate: {row['date'].strftime('%Y-%m-%d')}")
-        print(f"Spot Change: {row['spot_change']:.2f}%")
         print(f"Futures Change: {row['futures_change']:.2f}%")
-        print(f"Delta: {row['delta']:.2f}%")
+        print(f"Spot Change: {row['spot_change']:.2f}%")
+        print(f"Net Delta: {row['delta']:.2f}%")
 
 if __name__ == "__main__":
     main() 
