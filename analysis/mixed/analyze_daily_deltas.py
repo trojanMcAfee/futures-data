@@ -80,9 +80,15 @@ def plot_deltas(df_merged):
     # Add bands for standard deviation of futures-driven events
     std_dev = futures_driven_data['futures_change'].std()
     mean = futures_driven_data['futures_change'].mean()
-    ax1.axhline(y=mean + std_dev, color='gray', linestyle=':', alpha=0.5, 
+    
+    # Add mean line
+    ax1.axhline(y=mean, color='magenta', linestyle=':', alpha=0.8,
+                label=f'Mean: {mean:.2f}%')
+    
+    # Add standard deviation bands
+    ax1.axhline(y=mean + std_dev, color='lime', linestyle=':', alpha=0.8, 
                 label='±1 Std Dev (Futures)')
-    ax1.axhline(y=mean - std_dev, color='gray', linestyle=':', alpha=0.5)
+    ax1.axhline(y=mean - std_dev, color='lime', linestyle=':', alpha=0.8)
     
     ax1.set_title('Futures vs Spot Daily Changes (2024)\nHighlighting Futures-Driven Divergences', 
                   fontsize=14, pad=20)
@@ -102,9 +108,9 @@ def plot_deltas(df_merged):
     # Add vertical lines for mean and std dev of futures-driven events
     ax2.axvline(x=mean, color='red', linestyle='--', 
                 label=f'Mean: {mean:.2f}%')
-    ax2.axvline(x=mean + std_dev, color='gray', linestyle=':', 
+    ax2.axvline(x=mean + std_dev, color='lime', linestyle=':', alpha=0.8,
                 label=f'Std Dev: ±{std_dev:.2f}%')
-    ax2.axvline(x=mean - std_dev, color='gray', linestyle=':', alpha=0.7)
+    ax2.axvline(x=mean - std_dev, color='lime', linestyle=':', alpha=0.8)
     
     ax2.set_xlabel('Futures Daily Change (%)', fontsize=12)
     ax2.set_ylabel('Frequency', fontsize=12)
@@ -139,14 +145,23 @@ def main():
     # Get futures-driven events
     futures_driven = df_merged[df_merged['futures_driven']]
     
-    # Print summary statistics for futures-driven events
-    print("\nFutures-Driven Divergence Analysis:")
-    print("=================================")
-    print(f"Number of significant futures-driven events: {len(futures_driven)}")
-    print(f"Mean Futures Change: {futures_driven['futures_change'].mean():.2f}%")
-    print(f"Std Dev of Futures Changes: {futures_driven['futures_change'].std():.2f}%")
-    print(f"Max Absolute Futures Change: {abs(futures_driven['futures_change']).max():.2f}%")
-    print(f"Max Absolute Delta: {abs(futures_driven['delta']).max():.2f}%")
+    # Print overall market statistics
+    print("\nOverall Market Statistics:")
+    print("=========================")
+    print(f"Total trading days: {len(df_merged)}")
+    print(f"Average Futures Change: {df_merged['futures_change'].mean():.2f}%")
+    print(f"Average Spot Change: {df_merged['spot_change'].mean():.2f}%")
+    print(f"Average Daily Divergence: {abs(df_merged['delta']).mean():.2f}%")
+    
+    # Print futures-driven events statistics
+    print("\nFutures-Driven Events Statistics:")
+    print("================================")
+    print(f"Number of futures-driven events: {len(futures_driven)}")
+    print(f"Percentage of days with futures-driven events: {(len(futures_driven)/len(df_merged))*100:.1f}%")
+    print(f"Mean Futures Change during events: {futures_driven['futures_change'].mean():.2f}%")
+    print(f"Mean Spot Change during events: {futures_driven['spot_change'].mean():.2f}%")
+    print(f"Mean Divergence during events: {abs(futures_driven['delta']).mean():.2f}%")
+    print(f"Std Dev of Futures Changes during events: {futures_driven['futures_change'].std():.2f}%")
     
     # Print the dates with largest absolute deltas between futures and spot
     print("\nLargest Absolute Divergences (|Futures - Spot|):")
