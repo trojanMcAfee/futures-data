@@ -16,7 +16,7 @@ This ensures we only highlight cases where futures markets are clearly leading p
 """
 
 """
-- The Mean Futures Change represents the average of futures price changes during futures-driven events
+- The Mean Futures Change represents the average of futures price changes during futures-driven events.
 - Standard deviation measures how spread out the futures price changes are from their mean during futures-driven events.
 - The Mean Divergence during events represents the average absolute difference between futures and spot moves during futures-driven events.
 """
@@ -169,21 +169,20 @@ def main():
     print(f"Mean Divergence during events: {abs(futures_driven['delta']).mean():.2f}%")
     print(f"Std Dev of Futures Changes during events: {futures_driven['futures_change'].std():.2f}%")
     
-    # Print the dates with largest absolute deltas between futures and spot
-    print("\nLargest Absolute Divergences (|Futures - Spot|):")
-    for _, row in futures_driven.sort_values('delta', key=abs, ascending=False).head().iterrows():
-        print(f"\nDate: {row['date'].strftime('%Y-%m-%d')}")
-        print(f"Futures Change: {row['futures_change']:.2f}%")
-        print(f"Spot Change: {row['spot_change']:.2f}%")
-        print(f"Absolute Divergence: {abs(row['delta']):.2f}%")
+    # Print all futures-driven events sorted by absolute divergence
+    print("\nAll Futures-Driven Events (Sorted by Absolute Divergence):")
+    print("=" * 75)
+    print(f"{'Date':<12} {'Futures Change':>15} {'Spot Change':>15} {'Abs Divergence':>15}")
+    print("-" * 75)
     
-    # Print the dates with largest absolute futures moves
-    print("\nLargest Raw Futures Moves (|Futures Change|):")
-    for _, row in futures_driven.sort_values('futures_change', key=abs, ascending=False).head().iterrows():
-        print(f"\nDate: {row['date'].strftime('%Y-%m-%d')}")
-        print(f"Futures Change: {row['futures_change']:.2f}%")
-        print(f"Spot Change: {row['spot_change']:.2f}%")
-        print(f"Absolute Futures Move: {abs(row['futures_change']):.2f}%")
+    for _, row in futures_driven.sort_values('delta', key=abs, ascending=False).iterrows():
+        date_str = row['date'].strftime('%Y-%m-%d')
+        futures_change = f"{row['futures_change']:>15.2f}%"
+        spot_change = f"{row['spot_change']:>15.2f}%"
+        abs_divergence = f"{abs(row['delta']):>15.2f}%"
+        print(f"{date_str:<12}{futures_change}{spot_change}{abs_divergence}")
+    
+    print("=" * 75)
 
 if __name__ == "__main__":
     main() 
