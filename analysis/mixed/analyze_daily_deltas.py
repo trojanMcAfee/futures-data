@@ -28,10 +28,10 @@ from main.spot_analysis_logic import get_spot_data
 from main.futures_analysis_logic import get_futures_data
 
 def analyze_deltas(df_spot, df_futures):
-    # Merge spot and futures data on date
+    # Merge spot and futures data on date, including prices
     df_merged = pd.merge(
-        df_spot[['date', 'daily_change']].rename(columns={'daily_change': 'spot_change'}),
-        df_futures[['date', 'daily_change']].rename(columns={'daily_change': 'futures_change'}),
+        df_spot[['date', 'daily_change', 'price']].rename(columns={'daily_change': 'spot_change', 'price': 'spot_price'}),
+        df_futures[['date', 'daily_change', 'price']].rename(columns={'daily_change': 'futures_change', 'price': 'futures_price'}),
         on='date', how='inner'
     )
     
@@ -171,18 +171,21 @@ def main():
     
     # Print all futures-driven events sorted by absolute divergence
     print("\nAll Futures-Driven Events (Sorted by Absolute Divergence):")
-    print("=" * 75)
-    print(f"{'Date':<12} {'Futures Change':>15} {'Spot Change':>15} {'Abs Divergence':>15}")
-    print("-" * 75)
+    print("=" * 90)
+    print(f"{'Date':<12} {'Futures':^30} {'Spot':^30} {'Abs'}")
+    print(f"{'':<12} {'Price ($)':^15} {'Change (%)':^15} {'Price ($)':^15} {'Change (%)':^15} {'Div (%)':>8}")
+    print("-" * 90)
     
     for _, row in futures_driven.sort_values('delta', key=abs, ascending=False).iterrows():
         date_str = row['date'].strftime('%Y-%m-%d')
-        futures_change = f"{row['futures_change']:>15.2f}%"
-        spot_change = f"{row['spot_change']:>15.2f}%"
-        abs_divergence = f"{abs(row['delta']):>15.2f}%"
-        print(f"{date_str:<12}{futures_change}{spot_change}{abs_divergence}")
+        futures_price = f"{row['futures_price']:^15.2f}"
+        futures_change = f"{row['futures_change']:^15.2f}"
+        spot_price = f"{row['spot_price']:^15.2f}"
+        spot_change = f"{row['spot_change']:^15.2f}"
+        abs_divergence = f"{abs(row['delta']):>8.2f}"
+        print(f"{date_str:<12}{futures_price}{futures_change}{spot_price}{spot_change}{abs_divergence}")
     
-    print("=" * 75)
+    print("=" * 90)
 
 if __name__ == "__main__":
     main() 
