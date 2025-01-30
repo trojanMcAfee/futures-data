@@ -15,6 +15,12 @@ All three conditions must be met simultaneously to flag an event as futures-driv
 This ensures we only highlight cases where futures markets are clearly leading price action.
 """
 
+"""
+- The Mean Futures Change represents the average of futures price changes during futures-driven events
+- Standard deviation measures how spread out the futures price changes are from their mean during futures-driven events.
+- The Mean Divergence during events represents the average absolute difference between futures and spot moves during futures-driven events.
+"""
+
 # Add main directory to Python path
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 
