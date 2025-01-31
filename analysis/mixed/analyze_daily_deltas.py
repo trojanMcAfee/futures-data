@@ -145,9 +145,9 @@ def analyze_normalization_period(df_merged, event_date, target_divergence=0.73):
         days_to_normal += 1
         current_divergence = abs(row['futures_change'] - row['spot_change'])
         if current_divergence <= target_divergence:
-            return days_to_normal, row['date'], current_divergence
+            return days_to_normal, row['date'], current_divergence, row['futures_price']
     
-    return None, None, None
+    return None, None, None, None
 
 def main():
     # Get spot and futures data
@@ -204,23 +204,28 @@ def main():
     
     # Print normalization analysis for all events
     print("\nNormalization Analysis (Time to Return to Average Daily Divergence):")
-    print("=" * 100)
-    print(f"{'Event Date':<12} {'Initial Div':<12} {'Days to Norm':<15} {'Norm Date':<12} {'Final Div':<12}")
-    print("-" * 100)
+    print("=" * 130)
+    print(f"{'Event Date':<12} {'Initial Div':<12} {'Days to Norm':<15} {'Norm Date':<12} " + 
+          f"{'Start Price ($)':<15} {'End Price ($)':<15} {'Price Δ':<12}")
+    print("-" * 130)
     
     # Sort by initial divergence (descending)
     for _, row in futures_driven.sort_values('delta', key=abs, ascending=False).iterrows():
         date_str = row['date'].strftime('%Y-%m-%d')
         initial_div = abs(row['delta'])
-        days, norm_date, final_div = analyze_normalization_period(df_merged, row['date'])
+        start_price = row['futures_price']
+        days, norm_date, final_div, end_price = analyze_normalization_period(df_merged, row['date'])
         
         if days:
             norm_date_str = norm_date.strftime('%Y-%m-%d')
-            print(f"{date_str:<12} {initial_div:>8.2f}%    {days:>8} days    {norm_date_str:<12} {final_div:>8.2f}%")
+            price_change = ((end_price - start_price) / start_price) * 100
+            print(f"{date_str:<12} {initial_div:>8.2f}%    {days:>8} days    {norm_date_str:<12} " +
+                  f"{start_price:>11.2f}    {end_price:>11.2f}    {price_change:>+7.2f}%")
         else:
-            print(f"{date_str:<12} {initial_div:>8.2f}%    {'No return':>8}    {'N/A':<12} {'N/A':>8}")
+            print(f"{date_str:<12} {initial_div:>8.2f}%    {'No return':>8}    {'N/A':<12} " +
+                  f"{start_price:>11.2f}    {'N/A':>11}    {'N/A':>8}")
     
-    print("=" * 100)
+    print("=" * 130)
 
 if __name__ == "__main__":
     main() 
