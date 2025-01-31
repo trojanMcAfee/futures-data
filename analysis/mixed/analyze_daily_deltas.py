@@ -134,6 +134,21 @@ def plot_deltas(df_merged):
     print("\nPlot has been saved at:", plot_path)
     plt.close()
 
+def analyze_normalization_period(df_merged, event_date, target_divergence=0.73):
+    """Analyze how long it takes for the divergence to return to normal after a futures-driven event."""
+    # Get data after the event
+    post_event = df_merged[df_merged['date'] > pd.to_datetime(event_date)]
+    post_event = post_event.sort_values('date')
+    
+    days_to_normal = 0
+    for _, row in post_event.iterrows():
+        days_to_normal += 1
+        current_divergence = abs(row['futures_change'] - row['spot_change'])
+        if current_divergence <= target_divergence:
+            return days_to_normal, row['date'], current_divergence
+    
+    return None, None, None
+
 def main():
     # Get spot and futures data
     df_spot = get_spot_data()
@@ -186,6 +201,26 @@ def main():
         print(f"{date_str:<12}{futures_price}{futures_change}{spot_price}{spot_change}{abs_divergence}")
     
     print("=" * 90)
+    
+    # Print normalization analysis for all events
+    print("\nNormalization Analysis (Time to Return to Average Daily Divergence):")
+    print("=" * 100)
+    print(f"{'Event Date':<12} {'Initial Div':<12} {'Days to Norm':<15} {'Norm Date':<12} {'Final Div':<12}")
+    print("-" * 100)
+    
+    # Sort by initial divergence (descending)
+    for _, row in futures_driven.sort_values('delta', key=abs, ascending=False).iterrows():
+        date_str = row['date'].strftime('%Y-%m-%d')
+        initial_div = abs(row['delta'])
+        days, norm_date, final_div = analyze_normalization_period(df_merged, row['date'])
+        
+        if days:
+            norm_date_str = norm_date.strftime('%Y-%m-%d')
+            print(f"{date_str:<12} {initial_div:>8.2f}%    {days:>8} days    {norm_date_str:<12} {final_div:>8.2f}%")
+        else:
+            print(f"{date_str:<12} {initial_div:>8.2f}%    {'No return':>8}    {'N/A':<12} {'N/A':>8}")
+    
+    print("=" * 100)
 
 if __name__ == "__main__":
     main() 
