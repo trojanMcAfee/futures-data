@@ -78,10 +78,23 @@ def plot_deltas(df_merged):
     ax1.plot(df_merged['date'], df_merged['spot_change'], 
              color='red', linewidth=1.5, label='Spot Daily Change')
     
-    # Highlight futures-driven divergences
-    ax1.scatter(futures_driven_data['date'], futures_driven_data['futures_change'],
+    # Highlight futures-driven divergences with date labels
+    scatter = ax1.scatter(futures_driven_data['date'], futures_driven_data['futures_change'],
                 color='yellow', s=100, zorder=5, alpha=0.5,
                 label='Futures-Driven Divergence')
+    
+    # Add date labels next to points
+    for date, futures_change in zip(futures_driven_data['date'], futures_driven_data['futures_change']):
+        # Format date as MM-DD
+        date_label = date.strftime('%m-%d')
+        # Add small offset to y-position to avoid overlapping with point
+        y_offset = 0.2 if futures_change >= 0 else -0.2
+        ax1.annotate(date_label, 
+                    (date, futures_change),
+                    xytext=(5, y_offset * 20),  # 5 points right, scaled offset up/down
+                    textcoords='offset points',
+                    fontsize=8,
+                    rotation=45)
     
     # Add bands for standard deviation of futures-driven events
     std_dev = futures_driven_data['futures_change'].std()
@@ -102,10 +115,12 @@ def plot_deltas(df_merged):
     ax1.grid(True, which='major', linestyle='--', alpha=0.7)
     ax1.legend(loc='upper left')
     
-    # Customize x-axis for better spacing
     # Use WeekdayLocator for major ticks (Mondays) and format with date
     ax1.xaxis.set_major_locator(mdates.WeekdayLocator(byweekday=mdates.MO))
     ax1.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+    
+    # Format x-axis labels for readability
+    plt.setp(ax1.get_xticklabels(), rotation=45, ha='right')
     
     # Bottom subplot: Histogram of futures-driven divergences
     n, bins, patches = ax2.hist(futures_driven_data['futures_change'], bins=30, 
@@ -122,9 +137,6 @@ def plot_deltas(df_merged):
     ax2.set_ylabel('Frequency', fontsize=12)
     ax2.grid(True, linestyle='--', alpha=0.7)
     ax2.legend(loc='upper left')
-    
-    # Format x-axis labels for readability
-    plt.setp(ax1.get_xticklabels(), rotation=45, ha='right')
     
     # Adjust layout with more space for x-axis labels
     plt.tight_layout()
