@@ -253,5 +253,56 @@ def main():
     
     print("=" * 130)
 
+    # Add Long/Short Analysis
+    print("\nLong/Short Returns Analysis:")
+    print("=" * 90)
+    
+    # Define the events for each category
+    long_events = ['2024-01-17', '2024-02-14', '2024-07-15', '2024-07-26', 
+                  '2024-08-06', '2024-09-13', '2024-10-17', '2024-11-15']
+    short_events = ['2024-01-11', '2024-04-01', '2024-09-27', '2024-10-01', 
+                   '2024-10-31', '2024-11-20']
+    
+    print("LONG Positions (Buy at Start, Sell at End):")
+    print("-" * 90)
+    print(f"{'Date':<12} {'Start Price':>12} {'End Price':>12} {'Return':>10}")
+    print("-" * 90)
+    
+    long_returns = []
+    for date_str in long_events:
+        event_row = futures_driven[futures_driven['date'] == pd.to_datetime(date_str)].iloc[0]
+        _, _, _, start_price, end_price = analyze_normalization_period(df_merged, event_row['date'])
+        if start_price and end_price:
+            ret = ((end_price - start_price) / start_price) * 100
+            long_returns.append(ret)
+            print(f"{date_str:<12} {start_price:>12.2f} {end_price:>12.2f} {ret:>+10.2f}%")
+    
+    total_long = sum(long_returns)
+    print(f"\nTotal Long Return: {total_long:>+.2f}%")
+    
+    print("\n" + "=" * 90)
+    
+    print("\nSHORT Positions (Sell at Start, Buy at End):")
+    print("-" * 90)
+    print(f"{'Date':<12} {'Start Price':>12} {'End Price':>12} {'Return':>10}")
+    print("-" * 90)
+    
+    short_returns = []
+    for date_str in short_events:
+        event_row = futures_driven[futures_driven['date'] == pd.to_datetime(date_str)].iloc[0]
+        _, _, _, start_price, end_price = analyze_normalization_period(df_merged, event_row['date'])
+        if start_price and end_price:
+            ret = ((start_price - end_price) / start_price) * 100  # Note the reversed calculation for shorts
+            short_returns.append(ret)
+            print(f"{date_str:<12} {start_price:>12.2f} {end_price:>12.2f} {ret:>+10.2f}%")
+    
+    total_short = sum(short_returns)
+    print(f"\nTotal Short Return: {total_short:>+.2f}%")
+    
+    print("\n" + "=" * 90)
+    print(f"Combined Return (Longs Only): {total_long:>+.2f}%")
+    print(f"[Separate] Short Return: {total_short:>+.2f}%")
+    print("=" * 90)
+
 if __name__ == "__main__":
     main() 
