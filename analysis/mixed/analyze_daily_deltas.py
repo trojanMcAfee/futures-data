@@ -136,18 +136,28 @@ def plot_deltas(df_merged):
 
 def analyze_normalization_period(df_merged, event_date, target_divergence=0.73):
     """Analyze how long it takes for the divergence to return to normal after a futures-driven event."""
+    # Get the event day price (this is our true starting point)
+    event_price = df_merged[df_merged['date'] == pd.to_datetime(event_date)]['futures_price'].iloc[0]
+    
     # Get data after the event
     post_event = df_merged[df_merged['date'] > pd.to_datetime(event_date)]
     post_event = post_event.sort_values('date')
+    
+    if post_event.empty:
+        return None, None, None, None, None
     
     days_to_normal = 0
     for _, row in post_event.iterrows():
         days_to_normal += 1
         current_divergence = abs(row['futures_change'] - row['spot_change'])
         if current_divergence <= target_divergence:
-            return days_to_normal, row['date'], current_divergence, row['futures_price']
+            return days_to_normal, row['date'], current_divergence, event_price, row['futures_price']
     
-    return None, None, None, None
+    # If no normalization found, return the event price and last available price
+    if not post_event.empty:
+        return None, None, None, event_price, post_event.iloc[-1]['futures_price']
+    
+    return None, None, None, None, None
 
 def main():
     # Get spot and futures data
@@ -213,17 +223,21 @@ def main():
     for _, row in futures_driven.sort_values('delta', key=abs, ascending=False).iterrows():
         date_str = row['date'].strftime('%Y-%m-%d')
         initial_div = abs(row['delta'])
-        start_price = row['futures_price']
-        days, norm_date, final_div, end_price = analyze_normalization_period(df_merged, row['date'])
+        days, norm_date, final_div, start_price, end_price = analyze_normalization_period(df_merged, row['date'])
         
-        if days:
+        if days and start_price and start_price != 0:
             norm_date_str = norm_date.strftime('%Y-%m-%d')
             price_change = ((end_price - start_price) / start_price) * 100
             print(f"{date_str:<12} {initial_div:>8.2f}%    {days:>8} days    {norm_date_str:<12} " +
                   f"{start_price:>11.2f}    {end_price:>11.2f}    {price_change:>+7.2f}%")
         else:
-            print(f"{date_str:<12} {initial_div:>8.2f}%    {'No return':>8}    {'N/A':<12} " +
-                  f"{start_price:>11.2f}    {'N/A':>11}    {'N/A':>8}")
+            # For events without normalization or invalid prices, show the available price information
+            if start_price and end_price:
+                print(f"{date_str:<12} {initial_div:>8.2f}%    {'No return':>8}    {'N/A':<12} " +
+                      f"{start_price:>11.2f}    {end_price:>11.2f}    {'N/A':>8}")
+            else:
+                print(f"{date_str:<12} {initial_div:>8.2f}%    {'No return':>8}    {'N/A':<12} " +
+                      f"{'N/A':>11}    {'N/A':>11}    {'N/A':>8}")
     
     print("=" * 130)
 
