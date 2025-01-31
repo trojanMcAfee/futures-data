@@ -12,8 +12,13 @@ def load_data(file_path):
         return json.load(f)
 
 def get_spot_data():
-    # Load and process spot data
-    spot_data_path = Path("../../data/spot_data.json")
+    # Get the absolute path to the script's directory
+    script_dir = Path(__file__).resolve().parent
+    
+    # Navigate up two levels to the project root and get data directory
+    data_dir = script_dir.parent.parent / 'data'
+    spot_data_path = data_dir / 'spot_data.json'
+    
     if not spot_data_path.exists():
         print("Error: spot_data.json not found. Please run fetch_eia_data.py first.")
         return None
@@ -37,8 +42,13 @@ def get_spot_data():
     return df_spot
 
 def get_futures_data():
-    # Load and process futures data
-    futures_data_path = Path("../../data/output.json")
+    # Get the absolute path to the script's directory
+    script_dir = Path(__file__).resolve().parent
+    
+    # Navigate up two levels to the project root and get data directory
+    data_dir = script_dir.parent.parent / 'data'
+    futures_data_path = data_dir / 'output.json'
+    
     if not futures_data_path.exists():
         print("Error: output.json not found.")
         return None

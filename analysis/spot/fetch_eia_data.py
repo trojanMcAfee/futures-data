@@ -43,8 +43,15 @@ def save_data(data, output_path):
         print(f"Error saving data to file: {e}")
 
 def main():
+    # Get the absolute path to the script's directory
+    script_dir = Path(__file__).resolve().parent
+    
+    # Navigate up two levels to the project root and create data directory
+    data_dir = script_dir.parent.parent / 'data'
+    data_dir.mkdir(exist_ok=True)
+    
     # Define the output path
-    output_path = Path("../../data/spot_data.json")
+    output_path = data_dir / 'spot_data.json'
     
     # Check if file already exists
     if output_path.exists():
