@@ -98,6 +98,15 @@ def get_futures_data():
     return df_futures
 
 def plot_comparison(df_spot, df_futures):
+    # Get plot path relative to the script location
+    script_dir = Path(__file__).resolve().parent
+    plot_path = script_dir / 'spot_futures_comparison.png'
+    
+    # Check if plot already exists
+    if plot_path.exists():
+        print("\nPlot already exists at:", plot_path)
+        return
+    
     # Set style for better visibility
     plt.style.use('seaborn-v0_8-whitegrid')
     
@@ -172,7 +181,7 @@ def plot_comparison(df_spot, df_futures):
     plt.tight_layout()
     
     # Save the plot with high quality
-    plt.savefig('spot_futures_comparison.png', dpi=300, bbox_inches='tight')
+    plt.savefig(plot_path, dpi=300, bbox_inches='tight')
     plt.close()
 
 def main():
