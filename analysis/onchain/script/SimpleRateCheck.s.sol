@@ -8,6 +8,9 @@ interface IRETH {
     function getExchangeRate() external view returns (uint256);
 }
 
+/**
+ Pulls the monthly NAV price from rETH and writes it to a JSON file
+ */
 contract SimpleRateCheck is Script {
     IRETH public rocketTokenRETH;
     
@@ -64,7 +67,7 @@ contract SimpleRateCheck is Script {
 
     function tryGetRate(uint256 blockNumber) internal returns (bool success, uint256 rate) {
         try vm.createSelectFork(
-            "https://eth-mainnet.g.alchemy.com/v2/pdMXO8V_cevAZjdp6W-PJ8QSV3dd3rta",
+            "https://eth-mainnet.g.alchemy.com/v2/", //<---- needs an API key here
             blockNumber
         ) returns (uint256) {
             try rocketTokenRETH.getExchangeRate() returns (uint256 _rate) {
