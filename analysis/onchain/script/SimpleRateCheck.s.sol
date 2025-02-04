@@ -13,10 +13,10 @@ contract SimpleRateCheck is Script {
     
     // Constants for block calculation
     uint256 constant BLOCKS_PER_DAY = 7200; // ~12 second block time
-    uint256 constant BASE_BLOCK = 19459444; // March 1, 2024
-    uint256 constant BASE_TIMESTAMP = 1709251200; // March 1, 2024 00:00:00 UTC
-    uint256 constant DAYS_TO_CHECK = 31;
-    string constant OUTPUT_FILE = "../../data/reth_prices_march.json";
+    uint256 constant BASE_BLOCK = 19103444; // February 1, 2024
+    uint256 constant BASE_TIMESTAMP = 1706745600; // February 1, 2024 00:00:00 UTC
+    uint256 constant DAYS_TO_CHECK = 29; // February 2024 has 29 days (leap year)
+    string constant OUTPUT_FILE = "../../data/reth_prices_february.json";
 
     // Track success/failure stats
     uint256 public successCount;
@@ -57,7 +57,7 @@ contract SimpleRateCheck is Script {
         y = y + (m <= 2 ? 1 : 0);
 
         return string.concat(
-            vm.toString(y), "-03-",
+            vm.toString(y), "-02-",  // Changed to February
             d < 10 ? string.concat("0", vm.toString(d)) : vm.toString(d)
         );
     }
@@ -85,7 +85,7 @@ contract SimpleRateCheck is Script {
         console2.log("=== Setup Complete ===");
 
         console2.log("=== Starting Rate Collection ===");
-        console2.log("Will check March 2024 rates\n");
+        console2.log("Will check February 2024 rates\n");
 
         string[] memory timestamps = new string[](DAYS_TO_CHECK);
         string[] memory blocks = new string[](DAYS_TO_CHECK);
@@ -113,7 +113,7 @@ contract SimpleRateCheck is Script {
         console2.log("=== Collection Complete ===");
         console2.log(string.concat("  Successful collections: ", vm.toString(DAYS_TO_CHECK), "/", vm.toString(DAYS_TO_CHECK)));
 
-        string memory jsonStr = '{\n  "march": [\n';
+        string memory jsonStr = '{\n  "february": [\n';  // Changed to February
         for (uint i = 0; i < DAYS_TO_CHECK; i++) {
             jsonStr = string.concat(
                 jsonStr,
