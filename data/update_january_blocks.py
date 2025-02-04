@@ -1,6 +1,6 @@
 import json
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 import requests
 import os
 from dotenv import load_dotenv
@@ -13,8 +13,9 @@ ETHERSCAN_API_KEY = os.getenv('ETHERSCAN_API_KEY')
 ETHERSCAN_API_URL = 'https://api.etherscan.io/api'
 
 def convert_to_unix_timestamp(date_str):
-    """Convert date string to Unix timestamp at 00:00:00"""
-    dt = datetime.strptime(date_str, '%Y-%m-%d')
+    """Convert date string to Unix timestamp at 00:00:00 UTC"""
+    # Parse the date and make it timezone-aware with UTC
+    dt = datetime.strptime(date_str, '%Y-%m-%d').replace(tzinfo=timezone.utc)
     return int(dt.timestamp())
 
 def get_block_number_by_timestamp(timestamp):
