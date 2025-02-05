@@ -9,12 +9,12 @@ interface IRETH {
 }
 
 /**
- Pulls the April NAV price from rETH using blocks from reth_prices.json
+ Pulls the July NAV price from rETH using blocks from reth_prices.json
  */
 contract SimpleRateCheck is Script {
     IRETH public rocketTokenRETH;
-    string constant OUTPUT_FILE = "/Users/dnyrm/Documents/defi/commodities framework/sample-data/data/reth_april.json";
-    uint256 constant DAYS_IN_MONTH = 30;
+    string constant OUTPUT_FILE = "/Users/dnyrm/Documents/defi/commodities framework/sample-data/data/reth_july.json";
+    uint256 constant DAYS_IN_MONTH = 31;
 
     function setUp() public {
         console2.log("=== Setup Starting ===");
@@ -24,7 +24,7 @@ contract SimpleRateCheck is Script {
 
     function run() public {
         console2.log("=== Starting Rate Collection ===");
-        console2.log("Will check April 2024 rates\n");
+        console2.log("Will check July 2024 rates\n");
 
         string[] memory blocks = new string[](DAYS_IN_MONTH);
         string[] memory rates = new string[](DAYS_IN_MONTH);
@@ -35,7 +35,7 @@ contract SimpleRateCheck is Script {
         
         for (uint i = 0; i < DAYS_IN_MONTH; i++) {
             // Get block number for this day using the full path
-            string memory blockPath = string.concat(".april[", vm.toString(i), "].block");
+            string memory blockPath = string.concat(".july[", vm.toString(i), "].block");
             string memory blockStr = abi.decode(vm.parseJson(json, blockPath), (string));
             uint256 blockNum = vm.parseUint(blockStr);
             
