@@ -9,12 +9,12 @@ interface IRETH {
 }
 
 /**
- Pulls the January NAV price from rETH using blocks from reth_prices.json
+ Pulls the April NAV price from rETH using blocks from reth_prices.json
  */
 contract SimpleRateCheck is Script {
     IRETH public rocketTokenRETH;
-    string constant OUTPUT_FILE = "/Users/dnyrm/Documents/defi/commodities framework/sample-data/data/reth_march.json";
-    uint256 constant DAYS_IN_JANUARY = 31;
+    string constant OUTPUT_FILE = "/Users/dnyrm/Documents/defi/commodities framework/sample-data/data/reth_april.json";
+    uint256 constant DAYS_IN_MONTH = 30;
 
     function setUp() public {
         console2.log("=== Setup Starting ===");
@@ -24,18 +24,18 @@ contract SimpleRateCheck is Script {
 
     function run() public {
         console2.log("=== Starting Rate Collection ===");
-        console2.log("Will check March 2024 rates\n");
+        console2.log("Will check April 2024 rates\n");
 
-        string[] memory blocks = new string[](DAYS_IN_JANUARY);
-        string[] memory rates = new string[](DAYS_IN_JANUARY);
+        string[] memory blocks = new string[](DAYS_IN_MONTH);
+        string[] memory rates = new string[](DAYS_IN_MONTH);
 
         // Read blocks from reth_prices.json
         string memory jsonPath = "/Users/dnyrm/Documents/defi/commodities framework/sample-data/data/reth_prices.json";
         string memory json = vm.readFile(jsonPath);
         
-        for (uint i = 0; i < DAYS_IN_JANUARY; i++) {
+        for (uint i = 0; i < DAYS_IN_MONTH; i++) {
             // Get block number for this day using the full path
-            string memory blockPath = string.concat(".march[", vm.toString(i), "].block");
+            string memory blockPath = string.concat(".april[", vm.toString(i), "].block");
             string memory blockStr = abi.decode(vm.parseJson(json, blockPath), (string));
             uint256 blockNum = vm.parseUint(blockStr);
             
@@ -46,7 +46,7 @@ contract SimpleRateCheck is Script {
             );
             uint256 rawRate = rocketTokenRETH.getExchangeRate();
             
-            console2.log(string.concat("Day ", vm.toString(i + 1), "/", vm.toString(DAYS_IN_JANUARY)));
+            console2.log(string.concat("Day ", vm.toString(i + 1), "/", vm.toString(DAYS_IN_MONTH)));
             console2.log(string.concat("  Block: ", blockStr));
             console2.log(string.concat("  Raw Rate: ", vm.toString(rawRate), "\n"));
 
@@ -57,11 +57,11 @@ contract SimpleRateCheck is Script {
         }
 
         console2.log("=== Collection Complete ===");
-        console2.log(string.concat("  Successful collections: ", vm.toString(DAYS_IN_JANUARY), "/", vm.toString(DAYS_IN_JANUARY)));
+        console2.log(string.concat("  Successful collections: ", vm.toString(DAYS_IN_MONTH), "/", vm.toString(DAYS_IN_MONTH)));
 
         // Build JSON output
         string memory jsonStr = "[\n";
-        for (uint i = 0; i < DAYS_IN_JANUARY; i++) {
+        for (uint i = 0; i < DAYS_IN_MONTH; i++) {
             jsonStr = string.concat(
                 jsonStr,
                 '  {\n    "block": "',
@@ -70,7 +70,7 @@ contract SimpleRateCheck is Script {
                 rates[i],
                 '"\n  }'
             );
-            if (i < DAYS_IN_JANUARY - 1) {
+            if (i < DAYS_IN_MONTH - 1) {
                 jsonStr = string.concat(jsonStr, ",\n");
             } else {
                 jsonStr = string.concat(jsonStr, "\n");
