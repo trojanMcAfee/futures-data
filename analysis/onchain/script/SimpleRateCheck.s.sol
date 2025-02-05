@@ -13,7 +13,7 @@ interface IRETH {
  */
 contract SimpleRateCheck is Script {
     IRETH public rocketTokenRETH;
-    string constant OUTPUT_FILE = "/Users/dnyrm/Documents/defi/commodities framework/sample-data/data/reth_january.json";
+    string constant OUTPUT_FILE = "/Users/dnyrm/Documents/defi/commodities framework/sample-data/data/reth_march.json";
     uint256 constant DAYS_IN_JANUARY = 31;
 
     function setUp() public {
@@ -24,7 +24,7 @@ contract SimpleRateCheck is Script {
 
     function run() public {
         console2.log("=== Starting Rate Collection ===");
-        console2.log("Will check January 2024 rates\n");
+        console2.log("Will check March 2024 rates\n");
 
         string[] memory blocks = new string[](DAYS_IN_JANUARY);
         string[] memory rates = new string[](DAYS_IN_JANUARY);
@@ -35,7 +35,7 @@ contract SimpleRateCheck is Script {
         
         for (uint i = 0; i < DAYS_IN_JANUARY; i++) {
             // Get block number for this day using the full path
-            string memory blockPath = string.concat(".january[", vm.toString(i), "].block");
+            string memory blockPath = string.concat(".march[", vm.toString(i), "].block");
             string memory blockStr = abi.decode(vm.parseJson(json, blockPath), (string));
             uint256 blockNum = vm.parseUint(blockStr);
             
