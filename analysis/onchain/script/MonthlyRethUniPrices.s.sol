@@ -5,7 +5,7 @@ import {Script, console2} from "forge-std/Script.sol";
 import {UniswapV3RethPriceScript} from "./UniswapV3RethPrice.s.sol";
 import {stdJson} from "forge-std/StdJson.sol";
 
-contract JanuaryRethPricesScript is Script {
+contract MonthlyRethUniPricesScript is Script {
     using stdJson for string;
 
     function setUp() public {}
@@ -86,7 +86,7 @@ contract JanuaryRethPricesScript is Script {
 }
 
 // Struct to match JSON data structure
-struct JanuaryData {
+struct MonthlyData {
     string timestamp;
     string block;
     string rate;
