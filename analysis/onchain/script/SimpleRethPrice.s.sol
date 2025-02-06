@@ -23,7 +23,7 @@ contract SimpleRethPriceScript is Script {
     address constant POOL_ADDRESS = 0x553e9C493678d8606d6a5ba284643dB2110Df823;
     
     // Replace this with your desired block number
-    uint256 constant BLOCK_NUMBER = 19500711; // <-- Replace this value
+    uint256 constant BLOCK_NUMBER = 19950330; // <-- Replace this value
 
     function setUp() public {}
 

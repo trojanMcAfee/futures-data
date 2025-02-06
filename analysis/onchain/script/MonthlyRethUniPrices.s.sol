@@ -11,39 +11,39 @@ contract MonthlyRethUniPricesScript is Script {
     function setUp() public {}
 
     function run() public {
-        // Parse March blocks
-        string[] memory blocks = new string[](31); // March has 31 days
-        blocks[0] = "19336607";  // Mar 1
-        blocks[1] = "19343772";  // Mar 2
-        blocks[2] = "19350920";  // Mar 3
-        blocks[3] = "19358080";  // Mar 4
-        blocks[4] = "19365247";  // Mar 5
-        blocks[5] = "19372411";  // Mar 6
-        blocks[6] = "19379574";  // Mar 7
-        blocks[7] = "19386734";  // Mar 8
-        blocks[8] = "19393822";  // Mar 9
-        blocks[9] = "19400982";  // Mar 10
-        blocks[10] = "19408134"; // Mar 11
-        blocks[11] = "19415286"; // Mar 12
-        blocks[12] = "19422439"; // Mar 13
-        blocks[13] = "19429556"; // Mar 14
-        blocks[14] = "19436645"; // Mar 15
-        blocks[15] = "19443768"; // Mar 16
-        blocks[16] = "19450870"; // Mar 17
-        blocks[17] = "19457983"; // Mar 18
-        blocks[18] = "19465096"; // Mar 19
-        blocks[19] = "19472215"; // Mar 20
-        blocks[20] = "19479341"; // Mar 21
-        blocks[21] = "19486457"; // Mar 22
-        blocks[22] = "19493591"; // Mar 23
-        blocks[23] = "19500711"; // Mar 24
-        blocks[24] = "19507816"; // Mar 25
-        blocks[25] = "19514906"; // Mar 26
-        blocks[26] = "19522003"; // Mar 27
-        blocks[27] = "19528924"; // Mar 28
-        blocks[28] = "19535952"; // Mar 29
-        blocks[29] = "19543074"; // Mar 30
-        blocks[30] = "19550183"; // Mar 31
+        // Parse May blocks
+        string[] memory blocks = new string[](31); // May has 31 days
+        blocks[0] = "19771560";  // May 1
+        blocks[1] = "19778726";  // May 2
+        blocks[2] = "19785870";  // May 3
+        blocks[3] = "19793023";  // May 4
+        blocks[4] = "19800180";  // May 5
+        blocks[5] = "19807331";  // May 6
+        blocks[6] = "19814478";  // May 7
+        blocks[7] = "19821624";  // May 8
+        blocks[8] = "19828771";  // May 9
+        blocks[9] = "19835923";  // May 10
+        blocks[10] = "19843076"; // May 11
+        blocks[11] = "19850230"; // May 12
+        blocks[12] = "19857379"; // May 13
+        blocks[13] = "19864534"; // May 14
+        blocks[14] = "19871653"; // May 15
+        blocks[15] = "19878821"; // May 16
+        blocks[16] = "19885977"; // May 17
+        blocks[17] = "19893122"; // May 18
+        blocks[18] = "19900268"; // May 19
+        blocks[19] = "19907420"; // May 20
+        blocks[20] = "19914565"; // May 21
+        blocks[21] = "19921720"; // May 22
+        blocks[22] = "19928862"; // May 23
+        blocks[23] = "19936019"; // May 24
+        blocks[24] = "19943177"; // May 25
+        blocks[25] = "19950330"; // May 26
+        blocks[26] = "19957490"; // May 27
+        blocks[27] = "19964644"; // May 28
+        blocks[28] = "19971801"; // May 29
+        blocks[29] = "19978947"; // May 30
+        blocks[30] = "19986093"; // May 31
 
         // Create output array
         string memory output = "[";
@@ -79,11 +79,11 @@ contract MonthlyRethUniPricesScript is Script {
             
             // Write intermediate results to file
             string memory intermediateOutput = string.concat(output, "]");
-            string memory outputPath = "/Users/dnyrm/Documents/defi/commodities framework/sample-data/data/reth_uni_march.json";
+            string memory outputPath = "/Users/dnyrm/Documents/defi/commodities framework/sample-data/data/reth_uni_may.json";
             vm.writeFile(outputPath, intermediateOutput);
         }
         
-        console2.log("Data written to reth_uni_march.json");
+        console2.log("Data written to reth_uni_may.json");
     }
 }
 
