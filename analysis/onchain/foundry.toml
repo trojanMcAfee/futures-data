@@ -5,6 +5,10 @@ libs = ["lib"]
 solc = "0.8.13"
 dotenv_path = "../../../.env"  # Path to the .env file in the workspace root
 fs_permissions = [{ access = "read-write", path = "/Users/dnyrm/Documents/defi/commodities framework/sample-data/data" }]
+remappings = [
+    "forge-std/=lib/forge-std/src/",
+    "ds-test/=lib/forge-std/lib/ds-test/src/"
+]
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
 
