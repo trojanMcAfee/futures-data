@@ -18,6 +18,9 @@ interface IUniswapV3Pool {
         );
 }
 
+/**
+ * Script for getting the rETH/WETH Uniswap v3 pool price for a specific block
+ */
 contract UniswapV3RethPriceScript is Script {
     // rETH/WETH Uniswap v3 pool
     address constant POOL_ADDRESS = 0x553e9C493678d8606d6a5ba284643dB2110Df823;

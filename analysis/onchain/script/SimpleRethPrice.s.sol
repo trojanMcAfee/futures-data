@@ -18,12 +18,15 @@ interface IUniswapV3Pool {
         );
 }
 
+/**
+ * Script for querying the rETH/WETH Uniswap v3 pool for a specific block
+ */
 contract SimpleRethPriceScript is Script {
     // rETH/WETH Uniswap v3 pool
     address constant POOL_ADDRESS = 0x553e9C493678d8606d6a5ba284643dB2110Df823;
     
     // Replace this with your desired block number
-    uint256 constant BLOCK_NUMBER = 19950330; // <-- Replace this value
+    uint256 constant BLOCK_NUMBER = 21475765; // <-- Replace this value
 
     function setUp() public {}
 
