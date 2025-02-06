@@ -2,7 +2,6 @@
 
 # Cross-analyzes a traditional roll strategy and an alternative roll strategy (which consists 
 # of rolling subset of contracts daily on backwardeed markets) for a year.
-# *** THIS GOES ***
 
 import sys
 import os

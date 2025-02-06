@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 
+'''
+This script is used to analyze the roll events for all months in 2024, in a monthly manner.
+You can run this script by passing in the month you want to analyze as an argument.
+'''
+
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
