@@ -7,6 +7,11 @@ import pandas as pd
 from dotenv import load_dotenv
 import json
 
+'''
+This script is used to fetch the daily OHLCV data for the WTI Crude Oil futures contract for
+the nead-month and second-month contracts.
+'''
+
 # Load environment variables from .env file
 load_dotenv()
 
