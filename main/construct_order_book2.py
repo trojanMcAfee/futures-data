@@ -245,19 +245,18 @@ if __name__ == "__main__":
     # Create a historical client with your API key
     client = db.Historical("db-TrTUvBD8siexi8SwnA4c9FVWveHuj")
 
-    # Request MBO data for USO
-    data_path = "data/uso/order-book/xnas-basic-20240102.mbo.dbn.zst"
-    if os.path.exists(data_path):
-        data = db.DBNStore.from_file(data_path)
-    else:
-        data = client.timeseries.get_range(
-            dataset="XNAS.BASIC",
-            start="2024-01-02T08:00:00",
-            end="2024-01-02T23:59:00",
-            symbols=["USO"],
-            schema="mbo",
-            path=data_path,
-        )
+    # Request MBO data for USO during regular trading hours
+    data_path = "data/uso/order-book/arcx-pillar-20240102.mbo.dbn.zst"
+    
+    # Force a fresh download of the data, starting from UTC midnight to get the initial snapshot
+    data = client.timeseries.get_range(
+        dataset="ARCX.PILLAR",
+        start="2024-01-02T00:00:00",  # Start from UTC midnight to get initial snapshot
+        end="2024-01-02T21:00:00",    # 4:00 PM EST
+        symbols=["USO"],
+        schema="mbo",
+        path=data_path,
+    )
 
     # Parse the symbology
     instrument_map = db.common.symbology.InstrumentMap()
@@ -266,17 +265,33 @@ if __name__ == "__main__":
     # Create a market instance and process the data
     market = Market()
     print_count = 0  # Counter to limit output to 5 snapshots
+    trading_started = False  # Flag to track if we've reached regular trading hours
+    last_print_time = None  # Track when we last printed a snapshot
 
     for mbo in data:
-        market.apply(mbo)
-        # Print only 5 snapshots throughout the day
-        if mbo.flags & db.RecordFlags.F_LAST and print_count < 5:
-            symbol = (
-                instrument_map.resolve(mbo.instrument_id, mbo.pretty_ts_recv.date())
-                or "USO"
-            )
-            print(f"\n{symbol} Aggregated BBO | {mbo.pretty_ts_recv}")
-            best_bid, best_offer = market.aggregated_bbo(mbo.instrument_id)
-            print(f"    Best Offer: {best_offer}")
-            print(f"    Best Bid: {best_bid}")
-            print_count += 1 
+        # Only print snapshots during regular trading hours
+        ts = mbo.pretty_ts_recv
+        if ts.hour == 14 and ts.minute >= 30:  # 9:30 AM EST
+            trading_started = True
+        
+        try:
+            market.apply(mbo)
+            # Print snapshots spread throughout the trading day
+            if (trading_started and 
+                mbo.flags & db.RecordFlags.F_LAST and 
+                print_count < 5 and
+                (last_print_time is None or (ts - last_print_time).total_seconds() > 3600)):  # At least 1 hour between snapshots
+                
+                symbol = (
+                    instrument_map.resolve(mbo.instrument_id, ts.date())
+                    or "USO"
+                )
+                print(f"\n{symbol} Aggregated BBO | {ts}")
+                best_bid, best_offer = market.aggregated_bbo(mbo.instrument_id)
+                print(f"    Best Offer: {best_offer}")
+                print(f"    Best Bid: {best_bid}")
+                print_count += 1
+                last_print_time = ts
+        except KeyError as e:
+            # Skip orders that can't be found (this can happen with partial data)
+            continue 
