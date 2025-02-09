@@ -7,6 +7,10 @@ import databento as db
 from databento_dbn import FIXED_PRICE_SCALE, UNDEF_PRICE, BidAskPair, MBOMsg
 from sortedcontainers import SortedDict
 
+'''
+This script is used to construct the order book for USO during regular trading hours.
+'''
+
 @dataclass
 class PriceLevel:
     price: int
