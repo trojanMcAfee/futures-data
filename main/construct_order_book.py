@@ -6,6 +6,7 @@ from itertools import takewhile
 import databento as db
 from databento_dbn import FIXED_PRICE_SCALE, UNDEF_PRICE, BidAskPair, MBOMsg
 from sortedcontainers import SortedDict
+from datetime import datetime
 
 '''
 This script is used to construct the order book for USO during regular trading hours.
@@ -269,33 +270,50 @@ if __name__ == "__main__":
     # Create a market instance and process the data
     market = Market()
     print_count = 0  # Counter to limit output to 5 snapshots
-    trading_started = False  # Flag to track if we've reached regular trading hours
-    last_print_time = None  # Track when we last printed a snapshot
+    target_time = None  # Store the timestamp closest to 4:00 PM EST
+    snapshots = []  # Store snapshots around closing time
+    message_count = 0  # Debug counter
 
     for mbo in data:
-        # Only print snapshots during regular trading hours
         ts = mbo.pretty_ts_recv
-        if ts.hour == 14 and ts.minute >= 30:  # 9:30 AM EST
-            trading_started = True
-        
-        try:
-            market.apply(mbo)
-            # Print snapshots spread throughout the trading day
-            if (trading_started and 
-                mbo.flags & db.RecordFlags.F_LAST and 
-                print_count < 5 and
-                (last_print_time is None or (ts - last_print_time).total_seconds() > 3600)):  # At least 1 hour between snapshots
+        message_count += 1
+        market.apply(mbo)
+
+        # Look for messages around 4:00 PM EST (21:00 UTC)
+        # Include messages from 3:59:59 to 4:00:01 PM EST
+        if (ts.hour == 20 and ts.minute == 59 and ts.second >= 59) or \
+           (ts.hour == 21 and ts.minute == 0 and ts.second <= 1):
+            
+            # If this is our first message near closing, store it
+            if target_time is None or abs((ts - datetime(ts.year, ts.month, ts.day, 21, 0, 0, tzinfo=ts.tzinfo)).total_seconds()) < \
+               abs((target_time - datetime(target_time.year, target_time.month, target_time.day, 21, 0, 0, tzinfo=target_time.tzinfo)).total_seconds()):
+                target_time = ts
                 
-                symbol = (
-                    instrument_map.resolve(mbo.instrument_id, ts.date())
-                    or "USO"
-                )
-                print(f"\n{symbol} Aggregated BBO | {ts}")
+            # Store up to 5 snapshots around closing time
+            if mbo.flags & db.RecordFlags.F_LAST:
+                symbol = instrument_map.resolve(mbo.instrument_id, ts.date()) or "USO"
                 best_bid, best_offer = market.aggregated_bbo(mbo.instrument_id)
-                print(f"    Best Offer: {best_offer}")
-                print(f"    Best Bid: {best_bid}")
-                print_count += 1
-                last_print_time = ts
-        except KeyError as e:
-            # Skip orders that can't be found (this can happen with partial data)
-            continue 
+                snapshots.append((ts, symbol, best_bid, best_offer))
+
+    print(f"\nProcessed {message_count} messages")
+    print(f"Found {len(snapshots)} snapshots around closing time")
+
+    # Print the snapshots closest to 4:00 PM EST
+    if snapshots:
+        print("\nOrder Book State at Market Close (4:00 PM EST):")
+        print(f"Target time (closest to 4:00:00 PM EST): {target_time}")
+        print("-" * 60)
+        
+        # Sort snapshots by absolute time difference from 4:00:00 PM
+        closing_time = datetime(target_time.year, target_time.month, target_time.day, 21, 0, 0, tzinfo=target_time.tzinfo)
+        snapshots.sort(key=lambda x: abs((x[0] - closing_time).total_seconds()))
+        
+        for ts, symbol, best_bid, best_offer in snapshots[:5]:
+            print(f"\n{symbol} Aggregated BBO | {ts}")
+            print(f"    Best Offer: {best_offer}")
+            print(f"    Best Bid: {best_bid}")
+            print(f"    Time from 4:00:00 PM: {(ts - closing_time).total_seconds():.6f} seconds")
+    else:
+        print("\nNo snapshots found at market close. Available time range:")
+        print(f"First message: {data[0].pretty_ts_recv}")
+        print(f"Last message: {data[-1].pretty_ts_recv}") 
