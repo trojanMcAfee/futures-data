@@ -6,7 +6,7 @@ from itertools import takewhile
 import databento as db
 from databento_dbn import FIXED_PRICE_SCALE, UNDEF_PRICE, BidAskPair, MBOMsg
 from sortedcontainers import SortedDict
-from datetime import datetime
+from datetime import datetime, timezone
 
 '''
 This script is used to construct the order book for USO during regular trading hours.
@@ -142,17 +142,18 @@ class Book:
             level.orders.append(mbo)
 
     def _cancel(self, mbo: MBOMsg) -> None:
-        order = self.orders_by_id[mbo.order_id]
-        level = self._get_level(mbo.price, mbo.side)
-        assert order.size >= mbo.size
-        order.size -= mbo.size
-        # If the full size is cancelled, remove the order from the book
-        if order.size == 0:
-            self.orders_by_id.pop(mbo.order_id)
-            level.orders.remove(order)
-            # If the level is now empty, remove it from the book
-            if not level:
-                self._remove_level(mbo.price, mbo.side)
+        """Cancel an order."""
+        try:
+            order = self.orders_by_id[mbo.order_id]
+            price_level = self._get_level(order.price, order.side)
+            price_level.orders.remove(order)
+            if not price_level.orders:
+                self._remove_level(order.price, order.side)
+            del self.orders_by_id[mbo.order_id]
+        except KeyError:
+            # Skip if we try to cancel an order that doesn't exist in our book
+            # This can happen if the order was placed before our observation window
+            pass
 
     def _modify(self, mbo: MBOMsg) -> None:
         order = self.orders_by_id.get(mbo.order_id)
@@ -250,18 +251,23 @@ if __name__ == "__main__":
     # Create a historical client with your API key
     client = db.Historical("db-TrTUvBD8siexi8SwnA4c9FVWveHuj")
 
-    # Request MBO data for USO during regular trading hours
-    data_path = "data/uso/order-book/arcx-pillar-20240102.mbo.dbn.zst"
+    # Request MBO data for USO during post-market hours
+    data_path = "data/uso/order-book/arcx-pillar-20240102-post.mbo.dbn.zst"
     
-    # Force a fresh download of the data, starting from UTC midnight to get the initial snapshot
-    data = client.timeseries.get_range(
-        dataset="ARCX.PILLAR",
-        start="2024-01-02T00:00:00",  # Start from UTC midnight to get initial snapshot
-        end="2024-01-02T21:00:00",    # 4:00 PM EST
-        symbols=["USO"],
-        schema="mbo",
-        path=data_path,
-    )
+    # Only download if the file doesn't exist
+    if not os.path.exists(data_path):
+        print(f"Downloading data to {data_path}...")
+        data = client.timeseries.get_range(
+            dataset="ARCX.PILLAR",
+            schema="mbo",
+            symbols=["USO"],
+            start="2024-01-02T20:45:00",  # Start 15 minutes before market close
+            end="2024-01-03T14:00:00",    # 9:00 AM EST next day
+            path=data_path,
+        )
+    else:
+        print(f"Using existing data from {data_path}")
+        data = db.DBNStore.from_file(data_path)
 
     # Parse the symbology
     instrument_map = db.common.symbology.InstrumentMap()
@@ -269,51 +275,49 @@ if __name__ == "__main__":
 
     # Create a market instance and process the data
     market = Market()
-    print_count = 0  # Counter to limit output to 5 snapshots
-    target_time = None  # Store the timestamp closest to 4:00 PM EST
-    snapshots = []  # Store snapshots around closing time
+    snapshots = []  # Store snapshots after market close
     message_count = 0  # Debug counter
+    last_print_time = None  # Track time between snapshots
+    # Define market close time (4:00 PM EST / 9:00 PM UTC)
+    market_close_time = datetime(2024, 1, 2, 21, 0, 0, tzinfo=timezone.utc)
 
     for mbo in data:
         ts = mbo.pretty_ts_recv
         message_count += 1
         market.apply(mbo)
 
-        # Look for messages around 4:00 PM EST (21:00 UTC)
-        # Include messages from 3:59:59 to 4:00:01 PM EST
-        if (ts.hour == 20 and ts.minute == 59 and ts.second >= 59) or \
-           (ts.hour == 21 and ts.minute == 0 and ts.second <= 1):
-            
-            # If this is our first message near closing, store it
-            if target_time is None or abs((ts - datetime(ts.year, ts.month, ts.day, 21, 0, 0, tzinfo=ts.tzinfo)).total_seconds()) < \
-               abs((target_time - datetime(target_time.year, target_time.month, target_time.day, 21, 0, 0, tzinfo=target_time.tzinfo)).total_seconds()):
-                target_time = ts
+        # Only start collecting snapshots after market close
+        if ts >= market_close_time:
+            # Store snapshots in the first few minutes after market close
+            # Only store if at least 1 second has passed since last snapshot
+            if (mbo.flags & db.RecordFlags.F_LAST and 
+                len(snapshots) < 10 and
+                (last_print_time is None or (ts - last_print_time).total_seconds() >= 1.0)):
                 
-            # Store up to 5 snapshots around closing time
-            if mbo.flags & db.RecordFlags.F_LAST:
                 symbol = instrument_map.resolve(mbo.instrument_id, ts.date()) or "USO"
                 best_bid, best_offer = market.aggregated_bbo(mbo.instrument_id)
                 snapshots.append((ts, symbol, best_bid, best_offer))
+                last_print_time = ts
 
     print(f"\nProcessed {message_count} messages")
-    print(f"Found {len(snapshots)} snapshots around closing time")
+    print(f"Found {len(snapshots)} snapshots in post-market trading")
 
-    # Print the snapshots closest to 4:00 PM EST
+    # Print the snapshots
     if snapshots:
-        print("\nOrder Book State at Market Close (4:00 PM EST):")
-        print(f"Target time (closest to 4:00:00 PM EST): {target_time}")
+        print("\nOrder Book State After Market Close:")
+        print(f"Market closed at: 2024-01-02 21:00:00 UTC (4:00 PM EST)")
         print("-" * 60)
         
-        # Sort snapshots by absolute time difference from 4:00:00 PM
-        closing_time = datetime(target_time.year, target_time.month, target_time.day, 21, 0, 0, tzinfo=target_time.tzinfo)
-        snapshots.sort(key=lambda x: abs((x[0] - closing_time).total_seconds()))
-        
-        for ts, symbol, best_bid, best_offer in snapshots[:5]:
+        for ts, symbol, best_bid, best_offer in snapshots:
             print(f"\n{symbol} Aggregated BBO | {ts}")
             print(f"    Best Offer: {best_offer}")
             print(f"    Best Bid: {best_bid}")
-            print(f"    Time from 4:00:00 PM: {(ts - closing_time).total_seconds():.6f} seconds")
+            print(f"    Time since market close: {(ts - market_close_time).total_seconds():.3f} seconds")
+            if best_bid and best_offer:
+                spread = (best_offer.price - best_bid.price) / FIXED_PRICE_SCALE
+                spread_pct = (spread / (best_offer.price / FIXED_PRICE_SCALE)) * 100
+                print(f"    Spread: ${spread:.2f} ({spread_pct:.3f}%)")
     else:
-        print("\nNo snapshots found at market close. Available time range:")
+        print("\nNo snapshots found in post-market trading. Available time range:")
         print(f"First message: {data[0].pretty_ts_recv}")
         print(f"Last message: {data[-1].pretty_ts_recv}") 
