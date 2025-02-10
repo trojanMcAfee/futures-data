@@ -94,6 +94,14 @@ class NAVArbitrageSimulator:
         self.end_time = timestamp
 
     def generate_report(self) -> None:
+        print("\n=== NAV Arbitrage Trading Report ===")
+        print(f"Simulation period: {self.start_time} to {self.end_time}")
+        print(f"Duration: {self.end_time - self.start_time}")
+        print(f"\nTotal Investment: ${self.total_investment:,.2f}")
+        print(f"Total Profit: ${self.total_profit:,.2f}")
+        print(f"Overall ROI: {(self.total_profit / self.total_investment * 100):.2f}%")
+        print(f"Number of trades: {len(self.trades)}")
+        
         # Convert trades to DataFrame
         if self.trades:
             trades_df = pd.DataFrame([vars(t) for t in self.trades])
@@ -104,25 +112,20 @@ class NAVArbitrageSimulator:
             trades_df['cumulative_profit'] = trades_df['net_profit'].cumsum()
             trades_df['cumulative_roi'] = (trades_df['cumulative_profit'] / trades_df['cumulative_investment']) * 100
 
-            print("\n=== NAV Arbitrage Trading Report ===")
-            print(f"Simulation period: {self.start_time} to {self.end_time}")
-            print(f"Duration: {self.end_time - self.start_time}")
-            print(f"\nTotal Investment: ${self.total_investment:,.2f}")
-            print(f"Total Profit: ${self.total_profit:,.2f}")
-            print(f"Overall ROI: {(self.total_profit / self.total_investment * 100):.2f}%")
-            print(f"Number of trades: {len(self.trades)}")
-            
             print("\n=== Trade Summary ===")
             print(trades_df.to_string(index=False))
 
-        # Convert skipped opportunities to DataFrame
+        # Always print skipped opportunities section
+        print("\n=== Skipped Opportunities ===")
+        print(f"Number of skipped opportunities: {len(self.skipped_opportunities)}")
+        
         if self.skipped_opportunities:
             skipped_df = pd.DataFrame([vars(s) for s in self.skipped_opportunities])
             skipped_df['timestamp'] = pd.to_datetime(skipped_df['timestamp'])
-            
-            print("\n=== Skipped Opportunities ===")
-            print(f"Number of skipped opportunities: {len(self.skipped_opportunities)}")
+            print("\nSkipped Trades Detail:")
             print(skipped_df.to_string(index=False))
+        else:
+            print("No opportunities were skipped (all bids were above NAV price)")
 
 def run_simulation():
     # Change to the workspace root directory
@@ -170,9 +173,13 @@ def run_simulation():
     
     print("\nProcessing order book and simulating NAV arbitrage...")
     print(f"NAV Price: ${nav_price:.2f}")
+    
+    bid_count = 0
+    total_messages = 0
 
     # Process the order book
     for mbo in data:
+        total_messages += 1
         ts = mbo.pretty_ts_recv
         market.apply(mbo)
 
@@ -182,6 +189,7 @@ def run_simulation():
                 best_bid, _ = market.aggregated_bbo(mbo.instrument_id)
                 
                 if best_bid:
+                    bid_count += 1
                     bid_price = best_bid.price / FIXED_PRICE_SCALE
                     simulator.process_opportunity(ts, best_bid.size, nav_price, bid_price)
 
@@ -189,6 +197,9 @@ def run_simulation():
         if simulator.remaining_capital <= 0:
             break
 
+    print(f"\nProcessed {total_messages:,} total messages")
+    print(f"Evaluated {bid_count:,} bids after market open")
+    
     # Generate and print the report
     simulator.generate_report()
 
