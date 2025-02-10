@@ -7,6 +7,7 @@ import databento as db
 from databento_dbn import FIXED_PRICE_SCALE, UNDEF_PRICE, BidAskPair, MBOMsg
 from sortedcontainers import SortedDict
 from datetime import datetime, timezone
+from dotenv import load_dotenv
 
 '''
 This script is used to construct the order book for USO during regular trading hours.
@@ -248,8 +249,11 @@ class Market:
         book.apply(mbo)
 
 if __name__ == "__main__":
-    # Create a historical client with your API key
-    client = db.Historical("db-TrTUvBD8siexi8SwnA4c9FVWveHuj")
+    # Load environment variables
+    load_dotenv()
+    
+    # Create a historical client with API key from environment
+    client = db.Historical(os.getenv('DATABENTO_API_KEY'))
 
     # Request MBO data for USO during regular market hours, starting from midnight for synthetic snapshot
     data_path = "data/uso/order-book/arcx-pillar-20240103-full.mbo.dbn.zst"
