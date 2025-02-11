@@ -1,0 +1,97 @@
+from __future__ import annotations
+import os
+import sys
+from datetime import datetime, timezone
+from dotenv import load_dotenv
+import databento as db
+from databento_dbn import FIXED_PRICE_SCALE
+
+# Add the project root to the Python path
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+from main.construct_order_book import Market
+from analysis.arb.nav_arb_simulation import NAVArbitrageSimulator
+from analysis.arb.utils import load_nav_data
+
+def run_simulation():
+    # Load environment variables
+    load_dotenv()
+
+    # Set simulation date
+    simulation_date = datetime(2024, 1, 3)
+    
+    # Load NAV data and get first January price (original behavior)
+    nav_data = load_nav_data()
+    nav_price = float(nav_data['January'][0]['price'])
+    
+    # Get order book data
+    client = db.Historical(os.getenv('DATABENTO_API_KEY'))
+    data_path = os.path.join(
+        os.path.dirname(__file__), 
+        '..', '..', '..', 
+        'data', 'uso', 'order-book',
+        f"arcx-pillar-{simulation_date.strftime('%Y%m%d')}-full.mbo.dbn.zst"
+    )
+    
+    if not os.path.exists(data_path):
+        print(f"Downloading data to {data_path}...")
+        data = client.timeseries.get_range(
+            dataset="ARCX.PILLAR",
+            schema="mbo",
+            symbols=["USO"],
+            start=f"{simulation_date.strftime('%Y-%m-%d')}T00:00:00",
+            end=f"{simulation_date.strftime('%Y-%m-%d')}T21:00:00",
+            path=data_path,
+        )
+    else:
+        print(f"Using existing data from {data_path}")
+        data = db.DBNStore.from_file(data_path)
+
+    # Initialize market and simulator
+    market = Market()
+    simulator = NAVArbitrageSimulator(
+        initial_capital=7_500_000,
+        target_capital=7_500_000
+    )
+
+    # Parse symbology
+    instrument_map = db.common.symbology.InstrumentMap()
+    instrument_map.insert_metadata(data.metadata)
+
+    # Define market open time (9:00 AM EST / 14:00 UTC) - original behavior
+    market_open = datetime(2024, 1, 3, 14, 0, 0, tzinfo=timezone.utc)
+    
+    print("\nProcessing order book and simulating NAV arbitrage...")
+    print(f"Simulation date: {simulation_date.strftime('%Y-%m-%d')}")
+    print(f"NAV Price: ${nav_price:.2f}")
+    
+    bid_count = 0
+    total_messages = 0
+
+    # Process the order book
+    for mbo in data:
+        total_messages += 1
+        ts = mbo.pretty_ts_recv
+        market.apply(mbo)
+
+        # Only look at opportunities after market open
+        if ts >= market_open:
+            if mbo.flags & db.RecordFlags.F_LAST:
+                best_bid, _ = market.aggregated_bbo(mbo.instrument_id)
+                
+                if best_bid:
+                    bid_count += 1
+                    bid_price = best_bid.price / FIXED_PRICE_SCALE
+                    simulator.process_opportunity(ts, best_bid.size, nav_price, bid_price)
+
+        # Stop if we've used all our capital
+        if simulator.remaining_capital <= 0:
+            break
+
+    print(f"\nProcessed {total_messages:,} total messages")
+    print(f"Evaluated {bid_count:,} bids after market open")
+    
+    # Generate and print the report
+    simulator.generate_report()
+
+if __name__ == "__main__":
+    run_simulation() 
