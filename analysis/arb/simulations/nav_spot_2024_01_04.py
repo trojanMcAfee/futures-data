@@ -5,57 +5,13 @@ from datetime import datetime, timezone
 from dotenv import load_dotenv
 import databento as db
 from databento_dbn import FIXED_PRICE_SCALE
-import pandas as pd
 
 # Add the project root to the Python path
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 from main.construct_order_book import Market
 from analysis.arb.nav_arb_simulation import NAVArbitrageSimulator
 from analysis.arb.utils import load_nav_data
-
-class ModifiedNAVArbitrageSimulator(NAVArbitrageSimulator):
-    def generate_report(self) -> None:
-        print("\n=== NAV Arbitrage Trading Report ===")
-        print(f"Simulation period: {self.start_time} to {self.end_time}")
-        print(f"Duration: {self.end_time - self.start_time}")
-        print(f"\nTotal Investment: ${self.total_investment:,.2f}")
-        print(f"Total Profit: ${self.total_profit:,.2f}")
-        print(f"Overall ROI: {(self.total_profit / self.total_investment * 100):.2f}%")
-        print(f"Number of trades: {len(self.trades)}")
-        
-        # Convert trades to DataFrame for summary
-        if self.trades:
-            trades_df = pd.DataFrame([vars(t) for t in self.trades])
-            trades_df['timestamp'] = pd.to_datetime(trades_df['timestamp'])
-            
-            # Calculate cumulative metrics
-            trades_df['cumulative_investment'] = trades_df['initial_investment'].cumsum()
-            trades_df['cumulative_profit'] = trades_df['net_profit'].cumsum()
-            trades_df['cumulative_roi'] = (trades_df['cumulative_profit'] / trades_df['cumulative_investment']) * 100
-
-            print("\n=== Trade Summary ===")
-            print(trades_df.to_string(index=False))
-
-        # Show skipped opportunities summary
-        print("\n=== Skipped Opportunities ===")
-        print(f"Number of skipped opportunities: {len(self.skipped_opportunities)}")
-        
-        if self.skipped_opportunities:
-            print("\nFirst skipped trade:")
-            first = self.skipped_opportunities[0]
-            print(f"Timestamp: {first.timestamp}")
-            print(f"Shares: {first.shares}")
-            print(f"NAV Price: ${first.nav_price:.2f}")
-            print(f"Bid Price: ${first.bid_price:.2f}")
-            print(f"Price Difference: ${first.price_difference:.2f}")
-            
-            print("\nLast skipped trade:")
-            last = self.skipped_opportunities[-1]
-            print(f"Timestamp: {last.timestamp}")
-            print(f"Shares: {last.shares}")
-            print(f"NAV Price: ${last.nav_price:.2f}")
-            print(f"Bid Price: ${last.bid_price:.2f}")
-            print(f"Price Difference: ${last.price_difference:.2f}")
+from analysis.arb.simulations.nav_report_generator import SimulationResults, generate_report
 
 def run_simulation():
     # Load environment variables
@@ -93,7 +49,7 @@ def run_simulation():
 
     # Initialize market and simulator
     market = Market()
-    simulator = ModifiedNAVArbitrageSimulator(
+    simulator = NAVArbitrageSimulator(
         initial_capital=7_500_000,
         target_capital=7_500_000
     )
@@ -111,7 +67,6 @@ def run_simulation():
     
     bid_count = 0
     total_messages = 0
-    out_of_capital = False
 
     # Process the order book
     for mbo in data:
@@ -121,7 +76,6 @@ def run_simulation():
 
         # First check: Stop all processing if we're out of capital
         if simulator.remaining_capital <= 0:
-            out_of_capital = True
             print("\nSimulation stopped: Target capital fully utilized")
             break
 
@@ -138,8 +92,17 @@ def run_simulation():
     print(f"\nProcessed {total_messages:,} total messages")
     print(f"Evaluated {bid_count:,} bids after market open")
     
-    # Generate and print the report
-    simulator.generate_report()
+    # Get simulation results and generate report
+    results = simulator.get_results()
+    simulation_results = SimulationResults(
+        start_time=results['start_time'],
+        end_time=results['end_time'],
+        total_investment=results['total_investment'],
+        total_profit=results['total_profit'],
+        trades=results['trades'],
+        skipped_opportunities=results['skipped_opportunities']
+    )
+    generate_report(simulation_results)
 
 if __name__ == "__main__":
     run_simulation() 
