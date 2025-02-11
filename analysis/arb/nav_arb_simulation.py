@@ -44,8 +44,13 @@ class NAVArbitrageSimulator:
         self.end_time: Optional[datetime] = None
 
     def process_opportunity(self, timestamp: datetime, shares: int, nav_price: float, bid_price: float) -> None:
+        # Set start time if not set
         if not self.start_time:
             self.start_time = timestamp
+
+        # If we're out of capital, don't process any more opportunities
+        if self.remaining_capital <= 0:
+            return
 
         # Skip if bid price is lower than NAV
         if bid_price <= nav_price:
