@@ -11,6 +11,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 from main.construct_order_book import Market
 from analysis.arb.nav_arb_simulation import NAVArbitrageSimulator
 from analysis.arb.utils import load_nav_data
+from analysis.arb.simulations.nav_report_generator import SimulationResults, generate_report
 
 def run_simulation():
     # Load environment variables
@@ -73,6 +74,11 @@ def run_simulation():
         ts = mbo.pretty_ts_recv
         market.apply(mbo)
 
+        # First check: Stop all processing if we're out of capital
+        if simulator.remaining_capital <= 0:
+            print("\nSimulation stopped: Target capital fully utilized")
+            break
+
         # Only look at opportunities after market open
         if ts >= market_open:
             if mbo.flags & db.RecordFlags.F_LAST:
@@ -83,15 +89,19 @@ def run_simulation():
                     bid_price = best_bid.price / FIXED_PRICE_SCALE
                     simulator.process_opportunity(ts, best_bid.size, nav_price, bid_price)
 
-        # Stop if we've used all our capital
-        if simulator.remaining_capital <= 0:
-            break
-
     print(f"\nProcessed {total_messages:,} total messages")
     print(f"Evaluated {bid_count:,} bids after market open")
     
-    # Generate and print the report
-    simulator.generate_report()
+    # Get simulation results and generate report
+    results = simulator.get_results()
+    simulation_results = SimulationResults(
+        start_time=results['start_time'],
+        end_time=results['end_time'],
+        total_investment=results['total_investment'],
+        total_profit=results['total_profit'],
+        trades=results['trades']
+    )
+    generate_report(simulation_results)
 
 if __name__ == "__main__":
     run_simulation() 

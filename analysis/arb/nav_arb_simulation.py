@@ -35,30 +35,12 @@ class Trade:
             'roi_percent': self.roi_percent
         }
 
-@dataclass
-class SkippedOpportunity:
-    timestamp: datetime
-    shares: int
-    nav_price: float
-    bid_price: float
-    price_difference: float
-
-    def to_dict(self) -> Dict:
-        return {
-            'timestamp': self.timestamp,
-            'shares': self.shares,
-            'nav_price': self.nav_price,
-            'bid_price': self.bid_price,
-            'price_difference': self.price_difference
-        }
-
 class NAVArbitrageSimulator:
     def __init__(self, initial_capital: float, target_capital: float):
         self.initial_capital = initial_capital
         self.target_capital = target_capital
         self.remaining_capital = target_capital
         self.trades: List[Trade] = []
-        self.skipped_opportunities: List[SkippedOpportunity] = []
         self.total_profit = 0
         self.total_investment = 0
         self.start_time: Optional[datetime] = None
@@ -75,10 +57,6 @@ class NAVArbitrageSimulator:
 
         # Skip if bid price is lower than NAV
         if bid_price <= nav_price:
-            price_diff = nav_price - bid_price
-            self.skipped_opportunities.append(
-                SkippedOpportunity(timestamp, shares, nav_price, bid_price, price_diff)
-            )
             return
 
         # Calculate the investment needed for this trade
@@ -123,6 +101,5 @@ class NAVArbitrageSimulator:
             'end_time': self.end_time,
             'total_investment': self.total_investment,
             'total_profit': self.total_profit,
-            'trades': [trade.to_dict() for trade in self.trades],
-            'skipped_opportunities': [opp.to_dict() for opp in self.skipped_opportunities]
+            'trades': [trade.to_dict() for trade in self.trades]
         } 

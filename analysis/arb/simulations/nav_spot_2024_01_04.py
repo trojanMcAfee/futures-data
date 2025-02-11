@@ -99,8 +99,7 @@ def run_simulation():
         end_time=results['end_time'],
         total_investment=results['total_investment'],
         total_profit=results['total_profit'],
-        trades=results['trades'],
-        skipped_opportunities=results['skipped_opportunities']
+        trades=results['trades']
     )
     generate_report(simulation_results)
 
