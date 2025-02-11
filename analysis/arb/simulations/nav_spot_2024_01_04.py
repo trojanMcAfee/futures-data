@@ -11,7 +11,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 from main.construct_order_book import Market
 from analysis.arb.nav_arb_simulation import NAVArbitrageSimulator
 from analysis.arb.utils import load_nav_data
-from analysis.arb.simulations.nav_report_generator import SimulationResults, generate_report
+from analysis.arb.nav_report_generator import SimulationResults, generate_report
 
 def run_simulation():
     # Load environment variables
