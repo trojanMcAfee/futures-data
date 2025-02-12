@@ -5,22 +5,22 @@ from datetime import datetime
 from dotenv import load_dotenv
 
 # Add the project root to the Python path
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', '..', '..'))
 
 from analysis.arb.utils import load_nav_data
-from nav_spot_logic import run_nav_spot_simulation
-from nav_spot_total import get_tracker
+from analysis.arb.nav_spot_logic import run_nav_spot_simulation
+from analysis.arb.nav_spot_total import get_tracker
 
 def run_simulation():
     # Load environment variables
     load_dotenv()
 
     # Set simulation date
-    simulation_date = datetime(2024, 1, 4)
+    simulation_date = datetime(2024, 1, 3)
     
-    # Load NAV data and get January[1] price
+    # Load NAV data and get first January price
     nav_data = load_nav_data()
-    nav_price = float(nav_data['January'][1]['price'])
+    nav_price = float(nav_data['January'][0]['price'])
     
     # Run simulation with the specified date and NAV price
     results = run_nav_spot_simulation(simulation_date, nav_price)

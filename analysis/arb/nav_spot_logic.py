@@ -7,7 +7,7 @@ import databento as db
 from databento_dbn import FIXED_PRICE_SCALE
 
 # Add the project root to the Python path
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
 from main.construct_order_book import Market
 from analysis.arb.nav_arb_simulation import NAVArbitrageSimulator
 from analysis.arb.utils import load_nav_data
@@ -28,7 +28,7 @@ def run_nav_spot_simulation(simulation_date: datetime, nav_price: float) -> Simu
     client = db.Historical(os.getenv('DATABENTO_API_KEY'))
     data_path = os.path.join(
         os.path.dirname(__file__), 
-        '..', '..', '..', 
+        '..', '..', 
         'data', 'uso', 'order-book',
         f"arcx-pillar-{simulation_date.strftime('%Y%m%d')}-full.mbo.dbn.zst"
     )
