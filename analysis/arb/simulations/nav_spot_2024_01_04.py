@@ -9,6 +9,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 
 from analysis.arb.utils import load_nav_data
 from nav_spot_logic import run_nav_spot_simulation
+from nav_spot_total import get_tracker
 
 def run_simulation():
     # Load environment variables
@@ -22,7 +23,14 @@ def run_simulation():
     nav_price = float(nav_data['January'][1]['price'])
     
     # Run simulation with the specified date and NAV price
-    run_nav_spot_simulation(simulation_date, nav_price)
+    results = run_nav_spot_simulation(simulation_date, nav_price)
+    
+    # Add results to the total tracker
+    tracker = get_tracker()
+    if tracker.add_simulation_results(simulation_date, results.total_profit, len(results.trades)):
+        print("\nResults added to total tracker successfully.")
+    else:
+        print("\nResults already exist in total tracker for this date.")
 
 if __name__ == "__main__":
     run_simulation() 

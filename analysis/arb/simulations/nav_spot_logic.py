@@ -13,13 +13,16 @@ from analysis.arb.nav_arb_simulation import NAVArbitrageSimulator
 from analysis.arb.utils import load_nav_data
 from analysis.arb.nav_report_generator import SimulationResults, generate_report
 
-def run_nav_spot_simulation(simulation_date: datetime, nav_price: float) -> None:
+def run_nav_spot_simulation(simulation_date: datetime, nav_price: float) -> SimulationResults:
     """
     Run NAV spot arbitrage simulation for a specific date and NAV price.
     
     Args:
         simulation_date (datetime): The date to run the simulation for
         nav_price (float): The NAV price to use for arbitrage calculations
+        
+    Returns:
+        SimulationResults: The results of the simulation
     """
     # Get order book data
     client = db.Historical(os.getenv('DATABENTO_API_KEY'))
@@ -104,4 +107,5 @@ def run_nav_spot_simulation(simulation_date: datetime, nav_price: float) -> None
         total_profit=results['total_profit'],
         trades=results['trades']
     )
-    generate_report(simulation_results) 
+    generate_report(simulation_results)
+    return simulation_results 
