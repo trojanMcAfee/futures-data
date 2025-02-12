@@ -1,3 +1,15 @@
+"""
+Report generator for NAV arbitrage simulations. This module provides:
+- Data structures for organizing simulation results
+- Detailed trade-by-trade reporting
+- Performance metrics calculation and formatting
+- Summary statistics for simulation runs
+
+The report generator takes raw simulation results and produces formatted output
+showing trade details, cumulative metrics, and overall performance statistics,
+making it easy to analyze the effectiveness of the NAV arbitrage strategy.
+"""
+
 from __future__ import annotations
 import pandas as pd
 from dataclasses import dataclass

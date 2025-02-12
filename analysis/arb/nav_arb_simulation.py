@@ -1,3 +1,16 @@
+"""
+Core simulator for NAV arbitrage trading strategy. This module implements:
+- Trade execution logic with capital management
+- Real-time tracking of profits, investments, and ROI
+- Trade record keeping with detailed metrics
+- Capital allocation and position sizing
+
+The simulator maintains state throughout a trading session, tracking available capital,
+executed trades, and cumulative performance metrics. It implements safety checks to
+prevent over-allocation of capital and ensures trades are only executed when
+profitable opportunities exist (bid price > NAV price).
+"""
+
 from __future__ import annotations
 import os
 import sys

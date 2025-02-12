@@ -1,3 +1,15 @@
+"""
+Core logic for NAV arbitrage simulations. This module provides the main functionality
+for simulating NAV arbitrage opportunities using order book data. It handles:
+- Loading and processing order book data from Databento
+- Initializing and managing the market state
+- Running the arbitrage simulation with specified NAV prices
+- Generating detailed trade reports and simulation results
+
+The simulation looks for opportunities where market bids exceed the NAV price,
+allowing for profitable arbitrage trades.
+"""
+
 from __future__ import annotations
 import os
 import sys

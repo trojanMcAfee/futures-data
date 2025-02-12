@@ -1,3 +1,14 @@
+"""
+Tracks and accumulates results from multiple NAV arbitrage simulations. This module:
+- Maintains a persistent record of simulation results in nav_spot_total.json
+- Prevents duplicate processing of the same trading day
+- Calculates aggregate statistics like total profits and average profit per trade
+- Provides a summary report of all processed simulations
+
+The results are stored persistently and can be accessed across different sessions,
+making it easy to track the performance of the NAV arbitrage strategy over time.
+"""
+
 from __future__ import annotations
 import os
 import json
