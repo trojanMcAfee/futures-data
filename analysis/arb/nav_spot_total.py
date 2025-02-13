@@ -18,10 +18,11 @@ import pandas as pd
 from typing import Dict, List
 
 class NAVSpotTotal:
+    DAILY_INVESTMENT = 7_500_000  # Constant investment amount that gets recycled each day
+    
     def __init__(self):
         self.total_profits = 0.0
         self.total_trades = 0
-        self.total_investment = 0.0
         self.processed_dates = set()
         self.degraded_data_days: Dict[str, dict] = {}  # Store details of degraded data days
         self.data_file = os.path.join(os.path.dirname(__file__), 'nav_spot_total.json')
@@ -34,7 +35,6 @@ class NAVSpotTotal:
                 data = json.load(f)
                 self.total_profits = data['total_profits']
                 self.total_trades = data['total_trades']
-                self.total_investment = data.get('total_investment', 0.0)
                 self.processed_dates = set(data['processed_dates'])
                 self.degraded_data_days = data.get('degraded_data_days', {})
     
@@ -43,14 +43,13 @@ class NAVSpotTotal:
         data = {
             'total_profits': self.total_profits,
             'total_trades': self.total_trades,
-            'total_investment': self.total_investment,
             'processed_dates': list(self.processed_dates),
             'degraded_data_days': self.degraded_data_days
         }
         with open(self.data_file, 'w') as f:
             json.dump(data, f)
     
-    def add_simulation_results(self, date: datetime, profits: float, trades: int, investment: float = 7_500_000, data_quality: str = 'available') -> bool:
+    def add_simulation_results(self, date: datetime, profits: float, trades: int, data_quality: str = 'available') -> bool:
         """
         Add simulation results if not already processed.
         Returns True if results were added, False if already processed.
@@ -58,7 +57,6 @@ class NAVSpotTotal:
             date (datetime): The simulation date
             profits (float): Total profits from the simulation
             trades (int): Number of trades executed
-            investment (float): Total investment used in simulation (defaults to 7.5M)
             data_quality (str): Quality of the data used in simulation
         """
         date_str = date.strftime('%Y-%m-%d')
@@ -67,7 +65,6 @@ class NAVSpotTotal:
         
         self.total_profits += profits
         self.total_trades += trades
-        self.total_investment += investment
         self.processed_dates.add(date_str)
         
         # Track degraded data days
@@ -86,7 +83,7 @@ class NAVSpotTotal:
         """Print summary of all accumulated results"""
         print("\n=== NAV Spot Total Results ===")
         print(f"Total Profits: ${self.total_profits:,.2f}")
-        print(f"Total Investment: ${self.total_investment:,.2f}")
+        print(f"Base Investment (recycled daily): ${self.DAILY_INVESTMENT:,.2f}")
         print(f"Total Number of Trades: {self.total_trades:,}")
         print(f"Number of Days Processed: {len(self.processed_dates)}")
         
@@ -94,11 +91,11 @@ class NAVSpotTotal:
             avg_profit_per_trade = self.total_profits / self.total_trades
             print(f"Average Profit per Trade: ${avg_profit_per_trade:,.2f}")
         
-        if self.total_investment > 0:
-            cumulative_roi = (self.total_profits / self.total_investment) * 100
-            print(f"Cumulative ROI: {cumulative_roi:.2f}%")
-            daily_avg_roi = cumulative_roi / len(self.processed_dates) if self.processed_dates else 0
-            print(f"Average Daily ROI: {daily_avg_roi:.2f}%")
+        # Calculate ROI based on the constant investment amount
+        cumulative_roi = (self.total_profits / self.DAILY_INVESTMENT) * 100
+        print(f"Cumulative ROI: {cumulative_roi:.2f}%")
+        daily_avg_roi = cumulative_roi / len(self.processed_dates) if self.processed_dates else 0
+        print(f"Average Daily ROI: {daily_avg_roi:.2f}%")
         
         # Print degraded data days summary if any exist
         if self.degraded_data_days:
