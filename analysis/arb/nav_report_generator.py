@@ -14,23 +14,33 @@ from __future__ import annotations
 import pandas as pd
 from dataclasses import dataclass
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 
 @dataclass
 class SimulationResults:
     start_time: datetime
-    end_time: datetime
+    end_time: Optional[datetime]
     total_investment: float
     total_profit: float
     trades: List[dict]
 
 def generate_report(results: SimulationResults) -> None:
     print("\n=== NAV Arbitrage Trading Report ===")
-    print(f"Simulation period: {results.start_time} to {results.end_time}")
-    print(f"Duration: {results.end_time - results.start_time}")
+    print(f"Simulation period: {results.start_time} to {results.end_time if results.end_time else 'No trades executed'}")
+    if results.end_time:
+        print(f"Duration: {results.end_time - results.start_time}")
+    else:
+        print("Duration: No trades executed")
     print(f"\nTotal Investment: ${results.total_investment:,.2f}")
     print(f"Total Profit: ${results.total_profit:,.2f}")
-    print(f"Overall ROI: {(results.total_profit / results.total_investment * 100):.2f}%")
+    
+    # Calculate ROI only if there was investment
+    if results.total_investment > 0:
+        roi = (results.total_profit / results.total_investment * 100)
+        print(f"Overall ROI: {roi:.2f}%")
+    else:
+        print("Overall ROI: N/A - No trades executed")
+    
     print(f"Number of trades: {len(results.trades)}")
     
     # Convert trades to DataFrame for summary
