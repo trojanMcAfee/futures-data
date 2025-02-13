@@ -24,6 +24,7 @@ from main.construct_order_book import Market
 from analysis.arb.nav_arb_simulation import NAVArbitrageSimulator
 from analysis.arb.utils import load_nav_data
 from analysis.arb.nav_report_generator import SimulationResults, generate_report
+from analysis.arb.nav_spot_total import get_tracker
 
 def get_data_quality(client: db.Historical, dataset: str, date: datetime) -> str:
     """Check the data quality for a specific date."""
@@ -38,7 +39,7 @@ def get_data_quality(client: db.Historical, dataset: str, date: datetime) -> str
             return condition['condition']
     return 'available'  # Default to available if no condition found
 
-def run_nav_spot_simulation(simulation_date: datetime, nav_price: float) -> SimulationResults:
+def run_nav_spot_simulation(simulation_date: datetime, nav_price: float) -> tuple[SimulationResults, str]:
     """
     Run NAV spot arbitrage simulation for a specific date and NAV price.
     
@@ -47,7 +48,7 @@ def run_nav_spot_simulation(simulation_date: datetime, nav_price: float) -> Simu
         nav_price (float): The NAV price to use for arbitrage calculations
         
     Returns:
-        SimulationResults: The results of the simulation
+        tuple[SimulationResults, str]: The results of the simulation and the data quality
     """
     # Get order book data
     client = db.Historical(os.getenv('DATABENTO_API_KEY'))
@@ -139,4 +140,27 @@ def run_nav_spot_simulation(simulation_date: datetime, nav_price: float) -> Simu
         data_quality=data_quality
     )
     generate_report(simulation_results)
-    return simulation_results
+    return simulation_results, data_quality
+
+def run_daily_simulation(simulation_date: datetime, nav_index: int) -> None:
+    """
+    Run a daily NAV arbitrage simulation and add results to the tracker.
+    This function encapsulates the common logic used by all daily simulation scripts.
+    
+    Args:
+        simulation_date (datetime): The date to run the simulation for
+        nav_index (int): The index in the NAV data array to use for the simulation
+    """
+    # Load NAV data and get price for the specified index
+    nav_data = load_nav_data()
+    nav_price = float(nav_data['January'][nav_index]['price'])
+    
+    # Run simulation with the specified date and NAV price
+    results, data_quality = run_nav_spot_simulation(simulation_date, nav_price)
+    
+    # Add results to the total tracker
+    tracker = get_tracker()
+    if tracker.add_simulation_results(simulation_date, results.total_profit, len(results.trades), data_quality=data_quality):
+        print("\nResults added to total tracker successfully.")
+    else:
+        print("\nResults already exist in total tracker for this date.")

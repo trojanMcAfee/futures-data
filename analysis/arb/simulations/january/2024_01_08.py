@@ -12,27 +12,15 @@ sys.path.append(project_root)
 dotenv_path = os.path.join(project_root, '.env')
 load_dotenv(dotenv_path)
 
-from analysis.arb.utils import load_nav_data
-from analysis.arb.nav_spot_logic import run_nav_spot_simulation
-from analysis.arb.nav_spot_total import get_tracker
+from analysis.arb.nav_spot_logic import run_daily_simulation
 
 def run_simulation():
-    # Set simulation date
+    # Set simulation date and NAV index
     simulation_date = datetime(2024, 1, 8)
+    nav_index = 3  # Use January[3] price (NAV price from January 5th)
     
-    # Load NAV data and get January[3] price (NAV price from January 5th)
-    nav_data = load_nav_data()
-    nav_price = float(nav_data['January'][3]['price'])
-    
-    # Run simulation with the specified date and NAV price
-    results = run_nav_spot_simulation(simulation_date, nav_price)
-    
-    # Add results to the total tracker
-    tracker = get_tracker()
-    if tracker.add_simulation_results(simulation_date, results.total_profit, len(results.trades)):
-        print("\nResults added to total tracker successfully.")
-    else:
-        print("\nResults already exist in total tracker for this date.")
+    # Run simulation using shared logic
+    run_daily_simulation(simulation_date, nav_index)
 
 if __name__ == "__main__":
     run_simulation() 

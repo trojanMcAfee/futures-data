@@ -16,8 +16,8 @@ from analysis.arb.nav_spot_logic import run_daily_simulation
 
 def run_simulation():
     # Set simulation date and NAV index
-    simulation_date = datetime(2024, 1, 3)
-    nav_index = 0  # Use January[0] price (NAV price from January 2nd)
+    simulation_date = datetime(2024, 1, 10)
+    nav_index = 5  # Use January[5] price (NAV price from January 9th)
     
     # Run simulation using shared logic
     run_daily_simulation(simulation_date, nav_index)
