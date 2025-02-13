@@ -25,6 +25,19 @@ from analysis.arb.nav_arb_simulation import NAVArbitrageSimulator
 from analysis.arb.utils import load_nav_data
 from analysis.arb.nav_report_generator import SimulationResults, generate_report
 
+def get_data_quality(client: db.Historical, dataset: str, date: datetime) -> str:
+    """Check the data quality for a specific date."""
+    conditions = client.metadata.get_dataset_condition(
+        dataset=dataset,
+        start_date=date.strftime('%Y-%m-%d')
+    )
+    
+    # Find condition for our specific date
+    for condition in conditions:
+        if condition['date'] == date.strftime('%Y-%m-%d'):
+            return condition['condition']
+    return 'available'  # Default to available if no condition found
+
 def run_nav_spot_simulation(simulation_date: datetime, nav_price: float) -> SimulationResults:
     """
     Run NAV spot arbitrage simulation for a specific date and NAV price.
@@ -38,6 +51,11 @@ def run_nav_spot_simulation(simulation_date: datetime, nav_price: float) -> Simu
     """
     # Get order book data
     client = db.Historical(os.getenv('DATABENTO_API_KEY'))
+    dataset = "ARCX.PILLAR"
+    
+    # Check data quality first
+    data_quality = get_data_quality(client, dataset, simulation_date)
+    
     data_path = os.path.join(
         os.path.dirname(__file__), 
         '..', '..', 
@@ -48,7 +66,7 @@ def run_nav_spot_simulation(simulation_date: datetime, nav_price: float) -> Simu
     if not os.path.exists(data_path):
         print(f"Downloading data to {data_path}...")
         data = client.timeseries.get_range(
-            dataset="ARCX.PILLAR",
+            dataset=dataset,
             schema="mbo",
             symbols=["USO"],
             start=f"{simulation_date.strftime('%Y-%m-%d')}T00:00:00",
@@ -117,7 +135,8 @@ def run_nav_spot_simulation(simulation_date: datetime, nav_price: float) -> Simu
         end_time=results['end_time'],
         total_investment=results['total_investment'],
         total_profit=results['total_profit'],
-        trades=results['trades']
+        trades=results['trades'],
+        data_quality=data_quality
     )
     generate_report(simulation_results)
-    return simulation_results 
+    return simulation_results

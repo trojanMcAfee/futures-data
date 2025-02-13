@@ -23,10 +23,15 @@ class SimulationResults:
     total_investment: float
     total_profit: float
     trades: List[dict]
+    data_quality: str = 'available'  # Can be 'available', 'degraded', 'pending', 'missing', or 'intraday'
 
 def generate_report(results: SimulationResults) -> None:
     print("\n=== NAV Arbitrage Trading Report ===")
     print(f"Simulation period: {results.start_time} to {results.end_time if results.end_time else 'No trades executed'}")
+    print(f"Data Quality: {results.data_quality.upper()}")
+    if results.data_quality != 'available':
+        print("⚠️  Warning: Results may be affected by data quality issues")
+    
     if results.end_time:
         print(f"Duration: {results.end_time - results.start_time}")
     else:
@@ -54,4 +59,4 @@ def generate_report(results: SimulationResults) -> None:
         trades_df['cumulative_roi'] = (trades_df['cumulative_profit'] / trades_df['cumulative_investment']) * 100
 
         print("\n=== Trade Summary ===")
-        print(trades_df.to_string(index=False)) 
+        print(trades_df.to_string(index=False))
