@@ -163,7 +163,7 @@ def run_daily_simulation(simulation_date: datetime, nav_index: int, delay_ms: in
     results, data_quality = run_nav_spot_simulation(simulation_date, nav_price, delay_ms)
     
     # Add results to the total tracker
-    tracker = get_tracker()
+    tracker = get_tracker(delay_ms=delay_ms)
     if tracker.add_simulation_results(simulation_date, results.total_profit, len(results.trades), data_quality=data_quality):
         print("\nResults added to total tracker successfully.")
     else:

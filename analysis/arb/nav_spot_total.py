@@ -44,7 +44,7 @@ class NAVSpotTotal:
     
     def save_data(self):
         """Save current data to JSON file"""
-        # Load existing data first
+        # Load existing data first to preserve other delays' data
         all_data = {}
         if os.path.exists(self.DATA_FILE):
             with open(self.DATA_FILE, 'r') as f:
@@ -64,7 +64,7 @@ class NAVSpotTotal:
     
     def add_simulation_results(self, date: datetime, profits: float, trades: int, data_quality: str = 'available') -> bool:
         """
-        Add simulation results if not already processed.
+        Add simulation results if not already processed for this specific delay.
         Returns True if results were added, False if already processed.
         Args:
             date (datetime): The simulation date
@@ -73,7 +73,10 @@ class NAVSpotTotal:
             data_quality (str): Quality of the data used in simulation
         """
         date_str = date.strftime('%Y-%m-%d')
+        
+        # Check if this date is already processed for this specific delay
         if date_str in self.processed_dates:
+            print(f"\nDate {date_str} already processed for {self.delay_ms}ms delay")
             return False
         
         self.total_profits += profits
@@ -132,7 +135,16 @@ def get_tracker(delay_ms: int = 250) -> NAVSpotTotal:
     """Get or create the NAV spot total tracker"""
     return NAVSpotTotal(delay_ms=delay_ms)
 
+def print_all_summaries():
+    """Print summaries for all delay values"""
+    # Print 250ms delay results first
+    tracker_250ms = get_tracker(delay_ms=250)
+    tracker_250ms.print_summary()
+    print("\n")  # Add extra spacing between summaries
+    
+    # Print 12s delay results
+    tracker_12s = get_tracker(delay_ms=12000)
+    tracker_12s.print_summary()
+
 if __name__ == "__main__":
-    # Print summary for 250ms simulations
-    tracker = get_tracker()
-    tracker.print_summary() 
+    print_all_summaries() 
