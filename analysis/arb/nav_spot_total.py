@@ -19,35 +19,48 @@ from typing import Dict, List
 
 class NAVSpotTotal:
     DAILY_INVESTMENT = 7_500_000  # Constant investment amount that gets recycled each day
+    DATA_FILE = os.path.join(os.path.dirname(__file__), 'nav_spot_total.json')
     
-    def __init__(self):
+    def __init__(self, delay_ms: int = 1):
+        self.delay_ms = delay_ms
         self.total_profits = 0.0
         self.total_trades = 0
         self.processed_dates = set()
         self.degraded_data_days: Dict[str, dict] = {}  # Store details of degraded data days
-        self.data_file = os.path.join(os.path.dirname(__file__), 'nav_spot_total.json')
         self.load_data()
     
     def load_data(self):
         """Load existing data from JSON file if it exists"""
-        if os.path.exists(self.data_file):
-            with open(self.data_file, 'r') as f:
-                data = json.load(f)
-                self.total_profits = data['total_profits']
-                self.total_trades = data['total_trades']
-                self.processed_dates = set(data['processed_dates'])
-                self.degraded_data_days = data.get('degraded_data_days', {})
+        if os.path.exists(self.DATA_FILE):
+            with open(self.DATA_FILE, 'r') as f:
+                all_data = json.load(f)
+                delay_key = str(self.delay_ms)
+                if delay_key in all_data:
+                    data = all_data[delay_key]
+                    self.total_profits = data['total_profits']
+                    self.total_trades = data['total_trades']
+                    self.processed_dates = set(data['processed_dates'])
+                    self.degraded_data_days = data.get('degraded_data_days', {})
     
     def save_data(self):
         """Save current data to JSON file"""
-        data = {
+        # Load existing data first
+        all_data = {}
+        if os.path.exists(self.DATA_FILE):
+            with open(self.DATA_FILE, 'r') as f:
+                all_data = json.load(f)
+        
+        # Update data for current delay
+        all_data[str(self.delay_ms)] = {
             'total_profits': self.total_profits,
             'total_trades': self.total_trades,
             'processed_dates': list(self.processed_dates),
             'degraded_data_days': self.degraded_data_days
         }
-        with open(self.data_file, 'w') as f:
-            json.dump(data, f)
+        
+        # Save all data back
+        with open(self.DATA_FILE, 'w') as f:
+            json.dump(all_data, f)
     
     def add_simulation_results(self, date: datetime, profits: float, trades: int, data_quality: str = 'available') -> bool:
         """
@@ -81,7 +94,7 @@ class NAVSpotTotal:
     
     def print_summary(self):
         """Print summary of all accumulated results"""
-        print("\n=== NAV Spot Total Results ===")
+        print(f"\n=== NAV Spot Total Results ({self.delay_ms}ms delay) ===")
         print(f"Total Profits: ${self.total_profits:,.2f}")
         print(f"Base Investment (recycled daily): ${self.DAILY_INVESTMENT:,.2f}")
         print(f"Total Number of Trades: {self.total_trades:,}")
@@ -99,7 +112,7 @@ class NAVSpotTotal:
         
         # Print degraded data days summary if any exist
         if self.degraded_data_days:
-            print("\n=== Days with Data Quality Issues ===")
+            print(f"\n=== Days with Data Quality Issues ({self.delay_ms}ms delay) ===")
             df = pd.DataFrame(self.degraded_data_days.values())
             df = df.sort_values('date')
             df.columns = ['Date', 'Profits ($)', 'Trades', 'Data Quality']
@@ -115,10 +128,14 @@ class NAVSpotTotal:
             if self.total_profits != 0:
                 print(f"Percentage of Total Profits: {(degraded_profits/self.total_profits)*100:.2f}%")
 
-def get_tracker() -> NAVSpotTotal:
-    """Get or create the NAV spot total tracker"""
-    return NAVSpotTotal()
+def get_tracker(delay_ms: int = 1) -> NAVSpotTotal:
+    """Get or create the NAV spot total tracker with specified delay"""
+    return NAVSpotTotal(delay_ms=delay_ms)
 
 if __name__ == "__main__":
-    tracker = get_tracker()
-    tracker.print_summary() 
+    # Print summary for both 1ms and 250ms simulations
+    tracker_1ms = get_tracker(1)
+    tracker_1ms.print_summary()
+    
+    tracker_250ms = get_tracker(250)
+    tracker_250ms.print_summary() 

@@ -157,9 +157,18 @@ def print_simulation_report(simulator: NAVArbitrageSimulator250ms) -> None:
         trades_df['cumulative_profit'] = trades_df['net_profit'].cumsum()
         trades_df['cumulative_roi'] = (trades_df['cumulative_profit'] / trades_df['cumulative_investment']) * 100
 
+        # Format specific columns to 2 decimal places
+        trades_df['nav_price'] = trades_df['nav_price'].round(2)
+        trades_df['bid_price'] = trades_df['bid_price'].round(2)
+        trades_df['initial_investment'] = trades_df['initial_investment'].round(2)
+        trades_df['gross_revenue'] = trades_df['gross_revenue'].round(2)
+        trades_df['net_profit'] = trades_df['net_profit'].round(2)
+        trades_df['cumulative_investment'] = trades_df['cumulative_investment'].round(2)
+        trades_df['cumulative_profit'] = trades_df['cumulative_profit'].round(2)
+
         print("\n=== Trade Summary ===")
-        # Format the DataFrame columns
-        pd.set_option('display.float_format', lambda x: '%.6f' % x)
+        pd.set_option('display.float_format', lambda x: '{:.2f}'.format(x) if x.name in ['nav_price', 'bid_price', 'initial_investment', 'gross_revenue', 'net_profit', 'cumulative_investment', 'cumulative_profit'] else '{:f}'.format(x))
+        
         print(trades_df[[
             'timestamp', 'shares', 'nav_price', 'bid_price', 
             'initial_investment', 'gross_revenue', 'net_profit', 'roi_percent',

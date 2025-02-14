@@ -14,7 +14,7 @@ profitable opportunities exist (bid price > NAV price).
 from __future__ import annotations
 import os
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from dataclasses import dataclass
 from typing import List, Optional, Dict
 import pandas as pd
@@ -49,7 +49,7 @@ class Trade:
         }
 
 class NAVArbitrageSimulator:
-    def __init__(self, initial_capital: float, target_capital: float):
+    def __init__(self, initial_capital: float, target_capital: float, delay_ms: int = 1):
         self.initial_capital = initial_capital
         self.target_capital = target_capital
         self.remaining_capital = target_capital
@@ -58,11 +58,22 @@ class NAVArbitrageSimulator:
         self.total_investment = 0
         self.start_time: Optional[datetime] = None
         self.end_time: Optional[datetime] = None
+        self.last_trade_time: Optional[datetime] = None
+        self.min_time_between_trades = timedelta(milliseconds=delay_ms)
+
+    def can_trade(self, current_time: datetime) -> bool:
+        if self.last_trade_time is None:
+            return True
+        return (current_time - self.last_trade_time) >= self.min_time_between_trades
 
     def process_opportunity(self, timestamp: datetime, shares: int, nav_price: float, bid_price: float) -> None:
         # Set start time if not set
         if not self.start_time:
             self.start_time = timestamp
+
+        # Check if enough time has passed since last trade
+        if not self.can_trade(timestamp):
+            return
 
         # If we're out of capital, don't process any more opportunities
         if self.remaining_capital <= 0:
@@ -107,6 +118,7 @@ class NAVArbitrageSimulator:
         self.total_investment += investment
         self.remaining_capital -= investment
         self.end_time = timestamp
+        self.last_trade_time = timestamp
 
     def get_results(self) -> Dict:
         return {

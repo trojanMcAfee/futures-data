@@ -39,13 +39,14 @@ def get_data_quality(client: db.Historical, dataset: str, date: datetime) -> str
             return condition['condition']
     return 'available'  # Default to available if no condition found
 
-def run_nav_spot_simulation(simulation_date: datetime, nav_price: float) -> tuple[SimulationResults, str]:
+def run_nav_spot_simulation(simulation_date: datetime, nav_price: float, delay_ms: int = 1) -> tuple[SimulationResults, str]:
     """
     Run NAV spot arbitrage simulation for a specific date and NAV price.
     
     Args:
         simulation_date (datetime): The date to run the simulation for
         nav_price (float): The NAV price to use for arbitrage calculations
+        delay_ms (int): Minimum delay between trades in milliseconds (default: 1)
         
     Returns:
         tuple[SimulationResults, str]: The results of the simulation and the data quality
@@ -82,7 +83,8 @@ def run_nav_spot_simulation(simulation_date: datetime, nav_price: float) -> tupl
     market = Market()
     simulator = NAVArbitrageSimulator(
         initial_capital=7_500_000,
-        target_capital=7_500_000
+        target_capital=7_500_000,
+        delay_ms=delay_ms
     )
 
     # Parse symbology
@@ -101,6 +103,7 @@ def run_nav_spot_simulation(simulation_date: datetime, nav_price: float) -> tupl
     print("\nProcessing order book and simulating NAV arbitrage...")
     print(f"Simulation date: {simulation_date.strftime('%Y-%m-%d')}")
     print(f"NAV Price: ${nav_price:.2f}")
+    print(f"Trade delay: {delay_ms}ms")
     
     bid_count = 0
     total_messages = 0
@@ -142,7 +145,7 @@ def run_nav_spot_simulation(simulation_date: datetime, nav_price: float) -> tupl
     generate_report(simulation_results)
     return simulation_results, data_quality
 
-def run_daily_simulation(simulation_date: datetime, nav_index: int) -> None:
+def run_daily_simulation(simulation_date: datetime, nav_index: int, delay_ms: int = 1) -> None:
     """
     Run a daily NAV arbitrage simulation and add results to the tracker.
     This function encapsulates the common logic used by all daily simulation scripts.
@@ -150,13 +153,14 @@ def run_daily_simulation(simulation_date: datetime, nav_index: int) -> None:
     Args:
         simulation_date (datetime): The date to run the simulation for
         nav_index (int): The index in the NAV data array to use for the simulation
+        delay_ms (int): Minimum delay between trades in milliseconds (default: 1)
     """
     # Load NAV data and get price for the specified index
     nav_data = load_nav_data()
     nav_price = float(nav_data['January'][nav_index]['price'])
     
     # Run simulation with the specified date and NAV price
-    results, data_quality = run_nav_spot_simulation(simulation_date, nav_price)
+    results, data_quality = run_nav_spot_simulation(simulation_date, nav_price, delay_ms)
     
     # Add results to the total tracker
     tracker = get_tracker()
