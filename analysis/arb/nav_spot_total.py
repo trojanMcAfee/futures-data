@@ -21,7 +21,7 @@ class NAVSpotTotal:
     DAILY_INVESTMENT = 7_500_000  # Constant investment amount that gets recycled each day
     DATA_FILE = os.path.join(os.path.dirname(__file__), 'nav_spot_total.json')
     
-    def __init__(self, delay_ms: int = 1):
+    def __init__(self, delay_ms: int = 250):
         self.delay_ms = delay_ms
         self.total_profits = 0.0
         self.total_trades = 0
@@ -128,14 +128,11 @@ class NAVSpotTotal:
             if self.total_profits != 0:
                 print(f"Percentage of Total Profits: {(degraded_profits/self.total_profits)*100:.2f}%")
 
-def get_tracker(delay_ms: int = 1) -> NAVSpotTotal:
-    """Get or create the NAV spot total tracker with specified delay"""
+def get_tracker(delay_ms: int = 250) -> NAVSpotTotal:
+    """Get or create the NAV spot total tracker"""
     return NAVSpotTotal(delay_ms=delay_ms)
 
 if __name__ == "__main__":
-    # Print summary for both 1ms and 250ms simulations
-    tracker_1ms = get_tracker(1)
-    tracker_1ms.print_summary()
-    
-    tracker_250ms = get_tracker(250)
-    tracker_250ms.print_summary() 
+    # Print summary for 250ms simulations
+    tracker = get_tracker()
+    tracker.print_summary() 
