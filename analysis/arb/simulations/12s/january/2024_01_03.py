@@ -13,7 +13,6 @@ dotenv_path = os.path.join(project_root, '.env')
 load_dotenv(dotenv_path)
 
 from analysis.arb.nav_spot_logic import run_daily_simulation
-from analysis.arb.nav_spot_total import get_tracker
 
 def run_simulation():
     # Set simulation date and NAV index
@@ -23,10 +22,6 @@ def run_simulation():
     
     # Run simulation using shared logic with 12s delay
     run_daily_simulation(simulation_date, nav_index, delay_ms=delay_ms)
-    
-    # Print summary after simulation
-    tracker = get_tracker(delay_ms=delay_ms)
-    tracker.print_summary()
 
 if __name__ == "__main__":
     run_simulation() 
