@@ -8,6 +8,7 @@ from databento_dbn import FIXED_PRICE_SCALE
 import json
 from dataclasses import dataclass
 from typing import List, Dict, Optional
+import pandas as pd
 
 # Add the project root to the Python path
 project_root = os.path.join(os.path.dirname(__file__), '..', '..', '..')
@@ -124,9 +125,10 @@ def load_nav_price() -> float:
         return float(nav_data['January'][0]['price'])
 
 def print_simulation_report(simulator: NAVArbitrageSimulator250ms) -> None:
-    """Print a report of the simulation results"""
+    """Print a report of the simulation results in the same format as nav_report_generator.py"""
     print("\n=== NAV Arbitrage Trading Report (250ms Experiment) ===")
     print(f"Simulation period: {simulator.start_time} to {simulator.end_time if simulator.end_time else 'No trades executed'}")
+    print(f"Data Quality: available")
     
     if simulator.end_time:
         print(f"Duration: {simulator.end_time - simulator.start_time}")
@@ -145,17 +147,24 @@ def print_simulation_report(simulator: NAVArbitrageSimulator250ms) -> None:
     
     print(f"Number of trades: {len(simulator.trades)}")
     
-    # Print trade details
+    # Convert trades to DataFrame for summary
     if simulator.trades:
+        trades_df = pd.DataFrame([trade.to_dict() for trade in simulator.trades])
+        trades_df['timestamp'] = pd.to_datetime(trades_df['timestamp'])
+        
+        # Calculate cumulative metrics
+        trades_df['cumulative_investment'] = trades_df['initial_investment'].cumsum()
+        trades_df['cumulative_profit'] = trades_df['net_profit'].cumsum()
+        trades_df['cumulative_roi'] = (trades_df['cumulative_profit'] / trades_df['cumulative_investment']) * 100
+
         print("\n=== Trade Summary ===")
-        for trade in simulator.trades:
-            print(f"\nTimestamp: {trade.timestamp}")
-            print(f"Shares: {trade.shares:,}")
-            print(f"NAV Price: ${trade.nav_price:.2f}")
-            print(f"Bid Price: ${trade.bid_price:.2f}")
-            print(f"Investment: ${trade.initial_investment:,.2f}")
-            print(f"Profit: ${trade.net_profit:,.2f}")
-            print(f"ROI: {trade.roi_percent:.2f}%")
+        # Format the DataFrame columns
+        pd.set_option('display.float_format', lambda x: '%.6f' % x)
+        print(trades_df[[
+            'timestamp', 'shares', 'nav_price', 'bid_price', 
+            'initial_investment', 'gross_revenue', 'net_profit', 'roi_percent',
+            'cumulative_investment', 'cumulative_profit', 'cumulative_roi'
+        ]].to_string(index=False))
 
 def run_simulation():
     # Set simulation date and get NAV price
