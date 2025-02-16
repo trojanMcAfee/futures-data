@@ -38,6 +38,7 @@ class Trade:
     roi_percent: float
     block: int
     base_fee: float
+    eth_price: float
     total_cost: float
 
     def to_dict(self) -> Dict:
@@ -52,6 +53,7 @@ class Trade:
             'roi_percent': self.roi_percent,
             'block': self.block,
             'base_fee': self.base_fee,
+            'eth_price': self.eth_price,
             'total_cost': self.total_cost
         }
 
@@ -131,6 +133,7 @@ class NAVArbitrageSimulator:
                     roi_percent=roi,
                     block=tx_cost['block'],
                     base_fee=tx_cost['base_fee_gwei'],
+                    eth_price=tx_cost['eth_price'],
                     total_cost=total_cost_usd
                 )
             )

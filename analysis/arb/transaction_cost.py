@@ -132,7 +132,7 @@ def calculate_transaction_cost(timestamp: datetime) -> dict:
     Uses cached block information for 12-second windows to improve performance.
     
     Returns:
-        dict: Contains block number, base fee, and total cost in USD
+        dict: Contains block number, base fee, ETH price, and total cost in USD
     """
     global block_cache
     
@@ -152,5 +152,6 @@ def calculate_transaction_cost(timestamp: datetime) -> dict:
     return {
         'block': cached_info['block'],
         'base_fee_gwei': cached_info['base_fee_gwei'],
+        'eth_price': cached_info['eth_price'],
         'total_cost_usd': total_cost_usd
     } 

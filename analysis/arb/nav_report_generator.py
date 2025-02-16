@@ -71,11 +71,39 @@ def generate_report(results: SimulationResults) -> None:
         print(f"Transaction Costs as % of Gross Profit: {(total_costs / (results.total_profit + total_costs) * 100):.2f}%")
 
         print("\n=== Trade Summary ===")
-        # Reorder columns to show transaction cost information
-        cols = [
-            'timestamp', 'shares', 'nav_price', 'bid_price', 'initial_investment',
-            'block', 'base_fee', 'total_cost',
-            'gross_revenue', 'net_profit', 'roi_percent',
-            'cumulative_investment', 'cumulative_profit', 'cumulative_roi'
-        ]
-        print(trades_df[cols].to_string(index=False))
+        
+        # Create column groups with headers
+        investment_cols = ['shares', 'nav_price', 'bid_price', 'initial_investment']
+        costs_cols = ['block', 'base_fee', 'eth_price', 'total_cost']
+        revenue_profit_cols = ['gross_revenue', 'net_profit', 'roi_percent']
+        totals_cols = ['cumulative_investment', 'cumulative_profit', 'cumulative_roi']
+        
+        # Create multi-level column headers
+        columns = pd.MultiIndex.from_tuples([
+            ('timestamp', ''),
+            ('investment', 'shares'),
+            ('investment', 'nav_price'),
+            ('investment', 'bid_price'),
+            ('investment', 'initial_investment'),
+            ('costs', 'block'),
+            ('costs', 'base_fee'),
+            ('costs', 'eth_price'),
+            ('costs', 'total_cost'),
+            ('revenue/profits', 'gross_revenue'),
+            ('revenue/profits', 'net_profit'),
+            ('revenue/profits', 'roi_percent'),
+            ('TOTALS', 'cumulative_investment'),
+            ('TOTALS', 'cumulative_profit'),
+            ('TOTALS', 'cumulative_roi')
+        ])
+        
+        # Reorder columns and set multi-level headers
+        trades_df = trades_df[[col[1] if col[1] else col[0] for col in columns]]
+        trades_df.columns = columns
+        
+        # Format the output
+        pd.set_option('display.max_columns', None)
+        pd.set_option('display.width', None)
+        pd.set_option('display.expand_frame_repr', False)
+        
+        print(trades_df.to_string(index=False))
