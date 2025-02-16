@@ -8,6 +8,7 @@ Transaction cost calculator for NAV arbitrage trades. This module:
 
 from __future__ import annotations
 import os
+import sys
 import requests
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
@@ -22,6 +23,10 @@ ETHERSCAN_BASE_URL = "https://api.etherscan.io/api"
 KRAKEN_BASE_URL = "https://api.kraken.com/0/public"
 SWAP_COST = 150_000  # Gas units for a swap transaction
 CACHE_WINDOW_SECONDS = 12  # Cache block info for 12 seconds
+
+# Fallback values when API calls fail
+FALLBACK_BASE_FEE = 30  # 30 gwei
+FALLBACK_ETH_PRICE = 3500  # $3500 USD
 
 class BlockInfoCache:
     def __init__(self):
@@ -78,13 +83,24 @@ def get_block_by_timestamp(timestamp: float) -> int:
         'apikey': ETHERSCAN_API_KEY
     }
     
-    response = requests.get(ETHERSCAN_BASE_URL, params=params)
-    data = response.json()
-    
-    if data['status'] == '1':
-        return int(data['result'])
-    else:
-        raise Exception(f"Error getting block number: {data['message']}")
+    try:
+        response = requests.get(ETHERSCAN_BASE_URL, params=params)
+        data = response.json()
+        
+        if data['status'] == '1':
+            return int(data['result'])
+        else:
+            print("\nEtherscan API Error:")
+            print(f"Failed to get block number")
+            print(f"Error message: {data.get('message', 'Unknown error')}")
+            print(f"Response data: {data}")
+            sys.exit(1)
+            
+    except Exception as e:
+        print("\nEtherscan API Error:")
+        print(f"Failed to get block number")
+        print(f"Error message: {str(e)}")
+        sys.exit(1)
 
 def get_block_info(block_number: int) -> dict:
     """Get block information using eth_getBlockByNumber."""
@@ -96,13 +112,24 @@ def get_block_info(block_number: int) -> dict:
         'apikey': ETHERSCAN_API_KEY
     }
     
-    response = requests.get(ETHERSCAN_BASE_URL, params=params)
-    data = response.json()
-    
-    if 'result' in data and data['result']:
-        return data['result']
-    else:
-        raise Exception(f"Error getting block info: {data.get('error', {}).get('message', 'Unknown error')}")
+    try:
+        response = requests.get(ETHERSCAN_BASE_URL, params=params)
+        data = response.json()
+        
+        if 'result' in data and data['result']:
+            return data['result']
+        else:
+            print("\nEtherscan API Error:")
+            print(f"Failed to get block info for block {block_number}")
+            print(f"Error message: {data.get('error', {}).get('message', 'Unknown error')}")
+            print(f"Response data: {data}")
+            sys.exit(1)
+            
+    except Exception as e:
+        print("\nEtherscan API Error:")
+        print(f"Failed to get block info for block {block_number}")
+        print(f"Error message: {str(e)}")
+        sys.exit(1)
 
 def get_eth_price(timestamp: float) -> float:
     """Get ETH price from Kraken at a specific timestamp."""
@@ -112,19 +139,33 @@ def get_eth_price(timestamp: float) -> float:
         'count': 1
     }
     
-    response = requests.get(f"{KRAKEN_BASE_URL}/Trades", params=params)
-    
-    if response.status_code != 200:
-        raise Exception(f"API request failed with status code: {response.status_code}")
-    
-    data = response.json()
-    
-    if not data.get('error') and 'result' in data:
-        trades = data['result'].get('XETHZUSD', [])
-        if trades:
-            return float(trades[0][0])  # Return the price
-    
-    raise Exception("Error getting ETH price from Kraken")
+    try:
+        response = requests.get(f"{KRAKEN_BASE_URL}/Trades", params=params)
+        
+        if response.status_code != 200:
+            print("\nKraken API Error:")
+            print(f"Failed to get ETH price")
+            print(f"Status code: {response.status_code}")
+            print(f"Response text: {response.text}")
+            sys.exit(1)
+        
+        data = response.json()
+        
+        if not data.get('error') and 'result' in data:
+            trades = data['result'].get('XETHZUSD', [])
+            if trades:
+                return float(trades[0][0])  # Return the price
+        
+        print("\nKraken API Error:")
+        print(f"Failed to get ETH price")
+        print(f"Response data: {data}")
+        sys.exit(1)
+        
+    except Exception as e:
+        print("\nKraken API Error:")
+        print(f"Failed to get ETH price")
+        print(f"Error message: {str(e)}")
+        sys.exit(1)
 
 def calculate_transaction_cost(timestamp: datetime) -> dict:
     """
