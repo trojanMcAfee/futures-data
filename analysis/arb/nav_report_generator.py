@@ -15,6 +15,7 @@ import pandas as pd
 from dataclasses import dataclass
 from datetime import datetime
 from typing import List, Optional
+from analysis.arb.transaction_cost import SWAP_COST
 
 @dataclass
 class SimulationResults:
@@ -29,6 +30,8 @@ def generate_report(results: SimulationResults) -> None:
     print("\n=== NAV Arbitrage Trading Report ===")
     print(f"Simulation period: {results.start_time} to {results.end_time if results.end_time else 'No trades executed'}")
     print(f"Data Quality: {results.data_quality.upper()}")
+    print(f"Gas Units per Trade (SWAP_COST): {SWAP_COST:,}")
+    
     if results.data_quality != 'available':
         print("⚠️  Warning: Results may be affected by data quality issues")
     
@@ -57,6 +60,22 @@ def generate_report(results: SimulationResults) -> None:
         trades_df['cumulative_investment'] = trades_df['initial_investment'].cumsum()
         trades_df['cumulative_profit'] = trades_df['net_profit'].cumsum()
         trades_df['cumulative_roi'] = (trades_df['cumulative_profit'] / trades_df['cumulative_investment']) * 100
+        
+        # Calculate total transaction costs
+        total_costs = trades_df['total_cost'].sum()
+        avg_cost_per_trade = total_costs / len(trades_df) if len(trades_df) > 0 else 0
+        
+        print(f"\nTransaction Costs Summary:")
+        print(f"Total Transaction Costs: ${total_costs:,.2f}")
+        print(f"Average Cost per Trade: ${avg_cost_per_trade:,.2f}")
+        print(f"Transaction Costs as % of Gross Profit: {(total_costs / (results.total_profit + total_costs) * 100):.2f}%")
 
         print("\n=== Trade Summary ===")
-        print(trades_df.to_string(index=False))
+        # Reorder columns to show transaction cost information
+        cols = [
+            'timestamp', 'shares', 'nav_price', 'bid_price', 'initial_investment',
+            'block', 'base_fee', 'total_cost',
+            'gross_revenue', 'net_profit', 'roi_percent',
+            'cumulative_investment', 'cumulative_profit', 'cumulative_roi'
+        ]
+        print(trades_df[cols].to_string(index=False))

@@ -24,6 +24,7 @@ from databento_dbn import FIXED_PRICE_SCALE
 # Add the main directory to the Python path so we can import construct_order_book
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'main'))
 from construct_order_book import Market
+from analysis.arb.transaction_cost import calculate_transaction_cost, SWAP_COST
 
 @dataclass
 class Trade:
@@ -35,6 +36,9 @@ class Trade:
     gross_revenue: float
     net_profit: float
     roi_percent: float
+    block: int
+    base_fee: float
+    total_cost: float
 
     def to_dict(self) -> Dict:
         return {
@@ -45,7 +49,10 @@ class Trade:
             'initial_investment': self.initial_investment,
             'gross_revenue': self.gross_revenue,
             'net_profit': self.net_profit,
-            'roi_percent': self.roi_percent
+            'roi_percent': self.roi_percent,
+            'block': self.block,
+            'base_fee': self.base_fee,
+            'total_cost': self.total_cost
         }
 
 class NAVArbitrageSimulator:
@@ -94,31 +101,50 @@ class NAVArbitrageSimulator:
         if shares == 0:
             return
 
-        # Calculate trade metrics
+        # Calculate trade metrics before transaction costs
         gross_revenue = shares * bid_price
-        net_profit = gross_revenue - investment
-        roi = (net_profit / investment) * 100
+        net_profit_before_costs = gross_revenue - investment
 
-        # Record the trade
-        self.trades.append(
-            Trade(
-                timestamp=timestamp,
-                shares=shares,
-                nav_price=nav_price,
-                bid_price=bid_price,
-                initial_investment=investment,
-                gross_revenue=gross_revenue,
-                net_profit=net_profit,
-                roi_percent=roi
+        try:
+            # Calculate transaction costs
+            tx_cost = calculate_transaction_cost(timestamp)
+            total_cost_usd = tx_cost['total_cost_usd']
+
+            # Only proceed if the trade is still profitable after costs
+            if net_profit_before_costs <= total_cost_usd:
+                return
+
+            # Calculate final trade metrics including transaction costs
+            net_profit = net_profit_before_costs - total_cost_usd
+            roi = (net_profit / investment) * 100
+
+            # Record the trade
+            self.trades.append(
+                Trade(
+                    timestamp=timestamp,
+                    shares=shares,
+                    nav_price=nav_price,
+                    bid_price=bid_price,
+                    initial_investment=investment,
+                    gross_revenue=gross_revenue,
+                    net_profit=net_profit,
+                    roi_percent=roi,
+                    block=tx_cost['block'],
+                    base_fee=tx_cost['base_fee_gwei'],
+                    total_cost=total_cost_usd
+                )
             )
-        )
 
-        # Update simulator state
-        self.total_profit += net_profit
-        self.total_investment += investment
-        self.remaining_capital -= investment
-        self.end_time = timestamp
-        self.last_trade_time = timestamp
+            # Update simulator state
+            self.total_profit += net_profit
+            self.total_investment += investment
+            self.remaining_capital -= investment
+            self.end_time = timestamp
+            self.last_trade_time = timestamp
+
+        except Exception as e:
+            print(f"Error calculating transaction costs: {str(e)}")
+            return
 
     def get_results(self) -> Dict:
         return {
