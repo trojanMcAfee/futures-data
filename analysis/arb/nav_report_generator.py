@@ -72,15 +72,9 @@ def generate_report(results: SimulationResults) -> None:
 
         print("\n=== Trade Summary ===")
         
-        # Create column groups with headers
-        investment_cols = ['shares', 'nav_price', 'bid_price', 'initial_investment']
-        costs_cols = ['block', 'base_fee', 'eth_price', 'total_cost']
-        revenue_profit_cols = ['gross_revenue', 'net_profit', 'roi_percent']
-        totals_cols = ['cumulative_investment', 'cumulative_profit', 'cumulative_roi']
-        
-        # Create multi-level column headers
+        # Create multi-level column headers with adjusted spacing
         columns = pd.MultiIndex.from_tuples([
-            ('timestamp', ''),
+            ('', 'timestamp'),
             ('investment', 'shares'),
             ('investment', 'nav_price'),
             ('investment', 'bid_price'),
@@ -98,7 +92,7 @@ def generate_report(results: SimulationResults) -> None:
         ])
         
         # Reorder columns and set multi-level headers
-        trades_df = trades_df[[col[1] if col[1] else col[0] for col in columns]]
+        trades_df = trades_df[[col[1] for col in columns]]
         trades_df.columns = columns
         
         # Format the output
@@ -106,4 +100,6 @@ def generate_report(results: SimulationResults) -> None:
         pd.set_option('display.width', None)
         pd.set_option('display.expand_frame_repr', False)
         
-        print(trades_df.to_string(index=False))
+        # Adjust column spacing
+        with pd.option_context('display.max_colwidth', None):
+            print(trades_df.to_string(index=False))
