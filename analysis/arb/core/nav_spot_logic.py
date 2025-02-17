@@ -1,13 +1,9 @@
 """
-Core logic for NAV arbitrage simulations. This module provides the main functionality
-for simulating NAV arbitrage opportunities using order book data. It handles:
-- Loading and processing order book data from Databento
-- Initializing and managing the market state
-- Running the arbitrage simulation with specified NAV prices
-- Generating detailed trade reports and simulation results
-
-The simulation looks for opportunities where market bids exceed the NAV price,
-allowing for profitable arbitrage trades.
+Core logic for NAV spot arbitrage simulations. This module:
+- Loads and processes order book data
+- Manages market state and simulation parameters
+- Executes trading logic and opportunity detection
+- Generates simulation results and reports
 """
 
 from __future__ import annotations
@@ -19,12 +15,13 @@ import databento as db
 from databento_dbn import FIXED_PRICE_SCALE
 
 # Add the project root to the Python path
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
+project_root = os.path.join(os.path.dirname(__file__), '..', '..', '..')
+sys.path.append(project_root)
+
 from main.construct_order_book import Market
-from analysis.arb.nav_arb_simulation import NAVArbitrageSimulator
-from analysis.arb.utils import load_nav_data
-from analysis.arb.nav_report_generator import SimulationResults, generate_report
-from analysis.arb.nav_spot_total import get_tracker
+from analysis.arb.core.nav_arb_simulation import NAVArbitrageSimulator
+from analysis.arb.periphery.utils import load_nav_data
+from analysis.arb.periphery.nav_report_generator import SimulationResults, generate_report
 
 def get_data_quality(client: db.Historical, dataset: str, date: datetime) -> str:
     """Check the data quality for a specific date."""
@@ -39,7 +36,7 @@ def get_data_quality(client: db.Historical, dataset: str, date: datetime) -> str
             return condition['condition']
     return 'available'  # Default to available if no condition found
 
-def run_nav_spot_simulation(simulation_date: datetime, nav_price: float, delay_ms: int = 1) -> tuple[SimulationResults, str]:
+def run_nav_spot_simulation(simulation_date: datetime, nav_price: float, delay_ms: int = 1) -> SimulationResults:
     """
     Run NAV spot arbitrage simulation for a specific date and NAV price.
     
@@ -49,18 +46,13 @@ def run_nav_spot_simulation(simulation_date: datetime, nav_price: float, delay_m
         delay_ms (int): Minimum delay between trades in milliseconds (default: 1)
         
     Returns:
-        tuple[SimulationResults, str]: The results of the simulation and the data quality
+        SimulationResults: The results of the simulation
     """
     # Get order book data
     client = db.Historical(os.getenv('DATABENTO_API_KEY'))
-    dataset = "ARCX.PILLAR"
-    
-    # Check data quality first
-    data_quality = get_data_quality(client, dataset, simulation_date)
-    
     data_path = os.path.join(
         os.path.dirname(__file__), 
-        '..', '..', 
+        '..', '..', '..', 
         'data', 'uso', 'order-book',
         f"arcx-pillar-{simulation_date.strftime('%Y%m%d')}-full.mbo.dbn.zst"
     )
@@ -68,7 +60,7 @@ def run_nav_spot_simulation(simulation_date: datetime, nav_price: float, delay_m
     if not os.path.exists(data_path):
         print(f"Downloading data to {data_path}...")
         data = client.timeseries.get_range(
-            dataset=dataset,
+            dataset="ARCX.PILLAR",
             schema="mbo",
             symbols=["USO"],
             start=f"{simulation_date.strftime('%Y-%m-%d')}T00:00:00",
@@ -84,7 +76,7 @@ def run_nav_spot_simulation(simulation_date: datetime, nav_price: float, delay_m
     simulator = NAVArbitrageSimulator(
         initial_capital=7_500_000,
         target_capital=7_500_000,
-        delay_ms=delay_ms
+        delay_ms=delay_ms  # Pass the delay parameter
     )
 
     # Parse symbology
@@ -139,11 +131,10 @@ def run_nav_spot_simulation(simulation_date: datetime, nav_price: float, delay_m
         end_time=results['end_time'],
         total_investment=results['total_investment'],
         total_profit=results['total_profit'],
-        trades=results['trades'],
-        data_quality=data_quality
+        trades=results['trades']
     )
     generate_report(simulation_results)
-    return simulation_results, data_quality
+    return simulation_results
 
 def run_daily_simulation(simulation_date: datetime, nav_index: int, delay_ms: int = 1) -> None:
     """
@@ -160,11 +151,12 @@ def run_daily_simulation(simulation_date: datetime, nav_index: int, delay_ms: in
     nav_price = float(nav_data['January'][nav_index]['price'])
     
     # Run simulation with the specified date and NAV price
-    results, data_quality = run_nav_spot_simulation(simulation_date, nav_price, delay_ms)
+    results = run_nav_spot_simulation(simulation_date, nav_price, delay_ms=delay_ms)  # Pass the delay parameter
     
     # Add results to the total tracker
+    from analysis.arb.periphery.nav_spot_total import get_tracker
     tracker = get_tracker(delay_ms=delay_ms)
-    if tracker.add_simulation_results(simulation_date, results.total_profit, len(results.trades), data_quality=data_quality):
+    if tracker.add_simulation_results(simulation_date, results.total_profit, len(results.trades)):
         print("\nResults added to total tracker successfully.")
     else:
         print("\nResults already exist in total tracker for this date.")

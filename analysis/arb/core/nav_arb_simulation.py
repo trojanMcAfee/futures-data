@@ -21,10 +21,12 @@ import pandas as pd
 import databento as db
 from databento_dbn import FIXED_PRICE_SCALE
 
-# Add the main directory to the Python path so we can import construct_order_book
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'main'))
-from construct_order_book import Market
-from analysis.arb.transaction_cost import calculate_transaction_cost, SWAP_COST
+# Add the project root to the Python path
+project_root = os.path.join(os.path.dirname(__file__), '..', '..', '..')
+sys.path.append(project_root)
+
+from main.construct_order_book import Market
+from analysis.arb.periphery.transaction_cost import calculate_transaction_cost, SWAP_COST
 
 @dataclass
 class Trade:

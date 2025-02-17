@@ -15,7 +15,7 @@ import pandas as pd
 from dataclasses import dataclass
 from datetime import datetime
 from typing import List, Optional
-from analysis.arb.transaction_cost import SWAP_COST
+from analysis.arb.periphery.transaction_cost import SWAP_COST
 
 @dataclass
 class SimulationResults:

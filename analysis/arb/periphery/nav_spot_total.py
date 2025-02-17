@@ -1,6 +1,6 @@
 """
 Tracks and accumulates results from multiple NAV arbitrage simulations. This module:
-- Maintains a persistent record of simulation results in nav_spot_total.json
+- Maintains a persistent record of simulation results in results/nav_spot_total.json
 - Prevents duplicate processing of the same trading day
 - Calculates aggregate statistics like total profits and average profit per trade
 - Provides monthly and total summaries of all processed simulations
@@ -20,7 +20,7 @@ from collections import defaultdict
 
 class NAVSpotTotal:
     DAILY_INVESTMENT = 7_500_000  # Constant investment amount that gets recycled each day
-    DATA_FILE = os.path.join(os.path.dirname(__file__), 'nav_spot_total.json')
+    DATA_FILE = os.path.join(os.path.dirname(__file__), '..', 'results', 'nav_spot_total.json')
     
     def __init__(self, delay_ms: int = 250):
         self.delay_ms = delay_ms

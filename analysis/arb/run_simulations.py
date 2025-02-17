@@ -26,8 +26,8 @@ sys.path.append(project_root)
 dotenv_path = os.path.join(project_root, '.env')
 load_dotenv(dotenv_path)
 
-from analysis.arb.nav_spot_logic import run_daily_simulation
-from analysis.arb.nav_spot_total import get_tracker, print_all_summaries
+from analysis.arb.core.nav_spot_logic import run_daily_simulation
+from analysis.arb.periphery.nav_spot_total import get_tracker, print_all_summaries
 
 class SimulationConfig:
     def __init__(self, config_path: str):
@@ -103,7 +103,7 @@ def run_simulation_for_date(date_config: Dict[str, Union[str, int]], delay_ms: i
 def cli():
     """NAV Arbitrage Simulation Runner
     
-    This tool runs NAV arbitrage simulations based on configuration in simulations_config.yaml.
+    This tool runs NAV arbitrage simulations based on configuration in config/simulations_config.yaml.
     
     Examples:
         \b
@@ -125,7 +125,7 @@ def cli():
     pass
 
 @cli.command()
-@click.option('--config', default='simulations_config.yaml', help='Path to simulation configuration file')
+@click.option('--config', default='config/simulations_config.yaml', help='Path to simulation configuration file')
 @click.option('--month', help='Run simulations for specific month (YYYY-MM format)')
 @click.option('--date', help='Run simulation for specific date (YYYY-MM-DD format)')
 @click.option('--delay', type=int, help='Run simulation for specific delay in milliseconds')
@@ -202,7 +202,7 @@ def run(config: str, month: Optional[str] = None, date: Optional[str] = None, de
         print_all_summaries()
 
 @cli.command()
-@click.option('--config', default='simulations_config.yaml', help='Path to simulation configuration file')
+@click.option('--config', default='config/simulations_config.yaml', help='Path to simulation configuration file')
 def validate(config: str):
     """Validate simulation configuration file
     
