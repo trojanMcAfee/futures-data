@@ -1,0 +1,51 @@
+# NAV Arbitrage Simulation Configuration
+
+delays:
+  - delay_ms: 250
+    name: "250ms"
+  - delay_ms: 12000
+    name: "12s"
+
+months:
+  "2024-01":  # January 2024
+    dates:
+      - simulation_date: "2024-01-03"
+        nav_index: 0  # NAV price from January 2nd
+      - simulation_date: "2024-01-04"
+        nav_index: 1  # NAV price from January 3rd
+      - simulation_date: "2024-01-05"
+        nav_index: 2  # NAV price from January 4th
+      - simulation_date: "2024-01-08"
+        nav_index: 3  # NAV price from January 5th
+      - simulation_date: "2024-01-09"
+        nav_index: 4  # NAV price from January 8th
+      - simulation_date: "2024-01-10"
+        nav_index: 5  # NAV price from January 9th
+      - simulation_date: "2024-01-11"
+        nav_index: 6  # NAV price from January 10th
+      - simulation_date: "2024-01-12"
+        nav_index: 7  # NAV price from January 11th
+      - simulation_date: "2024-01-16"
+        nav_index: 8  # NAV price from January 12th
+      - simulation_date: "2024-01-17"
+        nav_index: 9  # NAV price from January 16th
+      - simulation_date: "2024-01-18"
+        nav_index: 10  # NAV price from January 17th
+      - simulation_date: "2024-01-19"
+        nav_index: 11  # NAV price from January 18th
+      - simulation_date: "2024-01-22"
+        nav_index: 12  # NAV price from January 19th
+      - simulation_date: "2024-01-23"
+        nav_index: 13  # NAV price from January 22nd
+      - simulation_date: "2024-01-24"
+        nav_index: 14  # NAV price from January 23rd
+      - simulation_date: "2024-01-25"
+        nav_index: 15  # NAV price from January 24th
+      - simulation_date: "2024-01-26"
+        nav_index: 16  # NAV price from January 25th
+      - simulation_date: "2024-01-29"
+        nav_index: 17  # NAV price from January 26th
+      - simulation_date: "2024-01-30"
+        nav_index: 18  # NAV price from January 29th
+      - simulation_date: "2024-01-31"
+        nav_index: 19  # NAV price from January 30th 
