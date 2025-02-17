@@ -3,7 +3,7 @@ Tracks and accumulates results from multiple NAV arbitrage simulations. This mod
 - Maintains a persistent record of simulation results in nav_spot_total.json
 - Prevents duplicate processing of the same trading day
 - Calculates aggregate statistics like total profits and average profit per trade
-- Provides a summary report of all processed simulations
+- Provides monthly and total summaries of all processed simulations
 
 The results are stored persistently and can be accessed across different sessions,
 making it easy to track the performance of the NAV arbitrage strategy over time.
@@ -15,7 +15,8 @@ import json
 from datetime import datetime
 from pathlib import Path
 import pandas as pd
-from typing import Dict, List
+from typing import Dict, List, Optional
+from collections import defaultdict
 
 class NAVSpotTotal:
     DAILY_INVESTMENT = 7_500_000  # Constant investment amount that gets recycled each day
@@ -27,6 +28,8 @@ class NAVSpotTotal:
         self.total_trades = 0
         self.processed_dates = set()
         self.degraded_data_days: Dict[str, dict] = {}  # Store details of degraded data days
+        self.zero_profit_days: Dict[str, dict] = {}  # Store details of zero profit days
+        self.monthly_data: Dict[str, List[dict]] = defaultdict(list)  # Store daily results by month
         self.load_data()
     
     def load_data(self):
@@ -41,6 +44,8 @@ class NAVSpotTotal:
                     self.total_trades = data['total_trades']
                     self.processed_dates = set(data['processed_dates'])
                     self.degraded_data_days = data.get('degraded_data_days', {})
+                    self.zero_profit_days = data.get('zero_profit_days', {})
+                    self.monthly_data = defaultdict(list, data.get('monthly_data', {}))
     
     def save_data(self):
         """Save current data to JSON file"""
@@ -55,7 +60,9 @@ class NAVSpotTotal:
             'total_profits': self.total_profits,
             'total_trades': self.total_trades,
             'processed_dates': list(self.processed_dates),
-            'degraded_data_days': self.degraded_data_days
+            'degraded_data_days': self.degraded_data_days,
+            'zero_profit_days': self.zero_profit_days,
+            'monthly_data': dict(self.monthly_data)
         }
         
         # Save all data back
@@ -73,6 +80,7 @@ class NAVSpotTotal:
             data_quality (str): Quality of the data used in simulation
         """
         date_str = date.strftime('%Y-%m-%d')
+        month_key = date.strftime('%Y-%m')
         
         # Check if this date is already processed for this specific delay
         if date_str in self.processed_dates:
@@ -83,17 +91,40 @@ class NAVSpotTotal:
         self.total_trades += trades
         self.processed_dates.add(date_str)
         
+        # Calculate daily ROI
+        daily_roi = (profits / self.DAILY_INVESTMENT) * 100
+        
+        # Store daily results in monthly data
+        daily_result = {
+            'date': date_str,
+            'profits': profits,
+            'trades': trades,
+            'roi': daily_roi,
+            'data_quality': data_quality
+        }
+        self.monthly_data[month_key].append(daily_result)
+        
         # Track degraded data days
         if data_quality != 'available':
-            self.degraded_data_days[date_str] = {
-                'date': date_str,
-                'profits': profits,
-                'trades': trades,
-                'data_quality': data_quality
-            }
+            self.degraded_data_days[date_str] = daily_result
+        
+        # Track zero profit days
+        if profits == 0:
+            self.zero_profit_days[date_str] = daily_result
         
         self.save_data()
         return True
+    
+    def get_monthly_summary(self, month_key: str) -> Optional[pd.DataFrame]:
+        """Generate a summary DataFrame for a specific month"""
+        if month_key not in self.monthly_data:
+            return None
+            
+        df = pd.DataFrame(self.monthly_data[month_key])
+        df = df.sort_values('date')
+        df['profits'] = df['profits'].map('${:,.2f}'.format)
+        df['roi'] = df['roi'].map('{:.2f}%'.format)
+        return df
     
     def print_summary(self):
         """Print summary of all accumulated results"""
@@ -113,17 +144,44 @@ class NAVSpotTotal:
         daily_avg_roi = cumulative_roi / len(self.processed_dates) if self.processed_dates else 0
         print(f"Average Daily ROI: {daily_avg_roi:.2f}%")
         
-        # Print degraded data days summary if any exist
+        # Print monthly summaries
+        print("\n=== Monthly Summaries ===")
+        for month_key in sorted(self.monthly_data.keys()):
+            month_name = datetime.strptime(month_key, '%Y-%m').strftime('%B %Y')
+            print(f"\n{month_name} Results:")
+            df = self.get_monthly_summary(month_key)
+            if df is not None:
+                print(df.to_string(index=False))
+                
+                # Calculate monthly totals
+                monthly_profits = sum(float(p.strip('$').replace(',', '')) for p in df['profits'])
+                monthly_trades = df['trades'].sum()
+                print(f"\nMonthly Totals:")
+                print(f"Total Profits: ${monthly_profits:,.2f}")
+                print(f"Total Trades: {monthly_trades:,}")
+                monthly_roi = (monthly_profits / self.DAILY_INVESTMENT) * 100
+                print(f"Monthly ROI: {monthly_roi:.2f}%")
+        
+        # Print zero profit days
+        if self.zero_profit_days:
+            print(f"\n=== Days with Zero Profits ({self.delay_ms}ms delay) ===")
+            df = pd.DataFrame(self.zero_profit_days.values())
+            df = df.sort_values('date')
+            df['profits'] = df['profits'].map('${:,.2f}'.format)
+            df['roi'] = df['roi'].map('{:.2f}%'.format)
+            print(df.to_string(index=False))
+        
+        # Print degraded data days
         if self.degraded_data_days:
             print(f"\n=== Days with Data Quality Issues ({self.delay_ms}ms delay) ===")
             df = pd.DataFrame(self.degraded_data_days.values())
             df = df.sort_values('date')
-            df.columns = ['Date', 'Profits ($)', 'Trades', 'Data Quality']
-            df['Profits ($)'] = df['Profits ($)'].map('${:,.2f}'.format)
+            df['profits'] = df['profits'].map('${:,.2f}'.format)
+            df['roi'] = df['roi'].map('{:.2f}%'.format)
             print(df.to_string(index=False))
             
             # Calculate impact of degraded data days
-            degraded_profits = sum(float(day['profits']) for day in self.degraded_data_days.values())
+            degraded_profits = sum(float(day['profits'].strip('$').replace(',', '')) for day in self.degraded_data_days.values())
             degraded_trades = sum(day['trades'] for day in self.degraded_data_days.values())
             print(f"\nImpact of Degraded Data Days:")
             print(f"Total Profits from Degraded Days: ${degraded_profits:,.2f}")
