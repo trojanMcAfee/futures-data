@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
-# Get API key from environment variable
+# Get API key from environment variables
 api_key = os.getenv('FIRECRAWL_API_KEY')
 if not api_key:
     raise ValueError("FIRECRAWL_API_KEY not found in environment variables")
@@ -14,16 +14,16 @@ if not api_key:
 try:
     app = FirecrawlApp(api_key=api_key)
     
-    response = app.scrape_url(
-        url='https://docs.firecrawl.dev/features/crawl',
+    # Using the correct parameters as per documentation
+    response = app.crawl_url(
+        'https://docs.firecrawl.dev/features/crawl',
         params={
-            'formats': ['markdown'],
-            'wait': True  # Wait for the crawl to complete
+            'scrapeOptions': {'formats': ['markdown']},
+            'limit': 100  # Optional: limit the number of pages to crawl
         }
     )
     
-    print("Response status:", response.status_code)
-    print("Response content:", response.text)
+    print("Response:", response)
     
 except Exception as e:
     print(f"Error occurred: {str(e)}")
