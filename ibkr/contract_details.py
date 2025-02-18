@@ -31,3 +31,7 @@ def getContractDetails(conid):
 
 if __name__ == "__main__":
     contractSearch() 
+    print("--------------------------------")
+    print("--------------------------------")
+    print("--------------------------------")
+    getContractDetails(500567051)
