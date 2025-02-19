@@ -10,7 +10,7 @@ def placeOrder(conid):
     base_url = "https://localhost:5000/v1/api/"
     endpoint = "iserver/account/DUH210440/orders"  # Using the account from the screenshot
 
-    # Order parameters
+    # Order parameters - matching exactly the format from the screenshot
     json_body = {
         "orders": [{
             "conid": int(conid),  # Convert to integer
@@ -34,13 +34,21 @@ def placeOrder(conid):
         try:
             response = order_req.json()
             # Check if we got an order reply message that needs confirmation
-            if isinstance(response, list) and len(response) > 0 and 'id' in response[0]:
-                return 'needs_confirmation', response[0]['id']
+            if isinstance(response, list) and len(response) > 0:
+                if 'id' in response[0]:
+                    # This is a confirmation request
+                    return 'needs_confirmation', response[0]['id']
+                elif 'order_id' in response[0]:
+                    # This is a pre-submitted order
+                    return 'pre_submitted', {
+                        'order_id': response[0]['order_id'],
+                        'status': response[0].get('order_status', 'Unknown')
+                    }
             # Check if we got a direct order confirmation
             elif isinstance(response, dict) and 'order_id' in response:
                 return 'confirmed', response['order_id']
-            else:
-                return 'error', 'Unexpected response format'
+            
+            return 'error', f'Unexpected response format: {response}'
         except json.JSONDecodeError as e:
             return 'error', f'Error parsing response: {e}'
     return 'error', 'No response received'
@@ -89,6 +97,10 @@ if __name__ == "__main__":
             print(f"\nOrder successfully submitted and confirmed! Status: {message}")
         else:
             print(f"\nError confirming order: {message}")
+    elif status == 'pre_submitted':
+        print(f"\nOrder successfully pre-submitted!")
+        print(f"Order ID: {result['order_id']}")
+        print(f"Status: {result['status']}")
     elif status == 'confirmed':
         print(f"\nOrder successfully submitted! Order ID: {result}")
     else:
