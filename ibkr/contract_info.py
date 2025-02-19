@@ -1,58 +1,47 @@
 import requests
 import json
 import urllib3
+from contract_search import searchContract
 
 # Disable SSL Warnings
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-def searchContract():
+def getContractInfo(conid):
     base_url = "https://localhost:5000/v1/api/"
-    endpoint = "iserver/secdef/search"
-    
-    # Search for MCL (Micro WTI Crude Oil) futures
-    json_body = {
-        "symbol": "MCL",
-        "secType": "FUT",
+    endpoint = "iserver/secdef/info"
+
+    # Parameters as specified in the documentation
+    params = {
+        "conid": conid,
+        "sectype": "FUT",
         "month": "MAR25",
         "exchange": "NYMEX"
     }
+
+    request_url = f"{base_url}{endpoint}"
+    print("\nStep 2: Getting contract details...")
+    print("Making request to URL:", request_url)
+    print("With parameters:", json.dumps(params, indent=2))
     
-    search_req = requests.post(url=base_url+endpoint, verify=False, json=json_body)
-    search_json = search_req.json()
-    print("\nSearch Results:")
-    print(json.dumps(search_json, indent=2))
+    contract_req = requests.get(url=request_url, params=params, verify=False)
+    print("\nInfo Response Status Code:", contract_req.status_code)
+    print("\nRaw Response Text:")
+    print(contract_req.text)
     
-    # Look for the specific futures contract
-    if isinstance(search_json, list):
-        for contract in search_json:
-            sections = contract.get('sections', [])
-            for section in sections:
-                if (section.get('secType') == 'FUT' and 
-                    section.get('exchange') == 'NYMEX' and 
-                    'MAR25' in section.get('months', '')):
-                    return contract.get('conid'), section
-    return None, None
-
-def getContractDetails(conid):
-    base_url = "https://localhost:5000/v1/api/"
-    endpoint = f"iserver/contract/{conid}/info"
-
-    request_url = base_url + endpoint
-    contract_req = requests.get(url=request_url, verify=False)
-    contract_json = json.dumps(contract_req.json(), indent=2)
-
-    print("\nRequest URL:", request_url)
-    print("\nResponse Status:", contract_req)
-    print("\nContract Information:")
-    print(contract_json)
+    if contract_req.text:
+        try:
+            contract_json = json.dumps(contract_req.json(), indent=2)
+            print("\nParsed JSON Response:")
+            print(contract_json)
+        except json.JSONDecodeError as e:
+            print("\nError parsing JSON response:", e)
 
 if __name__ == "__main__":
-    print("Searching for MCL March 2025 contract...")
-    conid, section = searchContract()
+    print("Starting contract information retrieval sequence...")
+    print("\nStep 1: Searching for contract...")
+    conid = searchContract()
     if conid:
         print(f"\nFound contract ID: {conid}")
-        print("\nFutures Section Information:")
-        print(json.dumps(section, indent=2))
-        getContractDetails(conid)
+        getContractInfo(conid)
     else:
         print("\nNo matching contract found") 
