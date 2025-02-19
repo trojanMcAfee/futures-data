@@ -70,10 +70,32 @@ def confirmOrder(reply_id):
     if reply_req.text:
         try:
             response = reply_req.json()
-            if isinstance(response, dict) and 'order_status' in response:
-                return True, response['order_status']
-            else:
-                return False, 'Unexpected confirmation response format'
+            
+            # Handle list response format (which seems to be what we get from IBKR)
+            if isinstance(response, list) and len(response) > 0:
+                order_info = response[0]
+                if 'order_id' in order_info and 'order_status' in order_info:
+                    status = order_info['order_status']
+                    # PreSubmitted is a valid status for market orders
+                    if status == "PreSubmitted":
+                        return True, {
+                            'order_id': order_info['order_id'],
+                            'status': status
+                        }
+                elif 'message' in order_info:
+                    return False, f'Received error message: {order_info.get("message")}'
+            
+            # Also handle direct dict response format (as shown in docs)
+            elif isinstance(response, dict):
+                if 'order_id' in response and 'order_status' in response:
+                    status = response['order_status']
+                    if status in ["Submitted", "PreSubmitted"]:
+                        return True, {
+                            'order_id': response['order_id'],
+                            'status': status
+                        }
+            
+            return False, f'Unexpected confirmation response format: {response}'
         except json.JSONDecodeError as e:
             return False, f'Error parsing confirmation response: {e}'
     return False, 'No confirmation response received'
@@ -94,13 +116,18 @@ if __name__ == "__main__":
         print("\nOrder needs confirmation. Reply ID:", result)
         success, message = confirmOrder(result)
         if success:
-            print(f"\nOrder successfully submitted and confirmed! Status: {message}")
+            if isinstance(message, dict):
+                print(f"\nOrder successfully submitted!")
+                print(f"Order ID: {message['order_id']}")
+                print(f"Status: {message['status']} (this is normal for market orders)")
+            else:
+                print(f"\nOrder successfully submitted! Status: {message}")
         else:
             print(f"\nError confirming order: {message}")
     elif status == 'pre_submitted':
-        print(f"\nOrder successfully pre-submitted!")
+        print(f"\nOrder successfully submitted!")
         print(f"Order ID: {result['order_id']}")
-        print(f"Status: {result['status']}")
+        print(f"Status: {result['status']} (this is normal for market orders)")
     elif status == 'confirmed':
         print(f"\nOrder successfully submitted! Order ID: {result}")
     else:
