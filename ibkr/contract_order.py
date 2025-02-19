@@ -15,9 +15,9 @@ def placeOrder(conid):
         "orders": [{
             "conid": int(conid),  # Convert to integer
             "orderType": "MKT",
-            "side": "BUY",
+            "side": "SELL",
             "tif": "DAY",
-            "quantity": 1
+            "quantity": 3
         }]
     }
 
