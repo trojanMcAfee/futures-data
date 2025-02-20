@@ -1,0 +1,212 @@
+[Skip to main content](https://docs.uniswap.org/contracts/v4/deployments#)
+
+On this page
+
+# Uniswap v4 Deployments
+
+The Uniswap Protocol is made up of multiple contracts on many networks.
+
+The latest version of `@uniswap/v4-core`, `@uniswap/v4-periphery`, and `@uniswap/universal-router` are deployed at the addresses listed below. Integrators should **no longer assume that they are deployed to the same addresses across chains** and be extremely careful to confirm mappings below.
+
+## Mainnet Deployments [​](https://docs.uniswap.org/contracts/v4/deployments\#mainnet-deployments "Direct link to heading")
+
+### Ethereum: 1 [​](https://docs.uniswap.org/contracts/v4/deployments\#ethereum-1 "Direct link to heading")
+
+| Contract | Address |
+| --- | --- |
+| [PoolManager](https://github.com/Uniswap/v4-core/blob/main/src/PoolManager.sol) | [`0x000000000004444c5dc75cB358380D2e3dE08A90`](https://etherscan.io/address/0x000000000004444c5dc75cB358380D2e3dE08A90) |
+| [PositionDescriptor](https://github.com/Uniswap/v4-periphery/blob/main/src/PositionDescriptor.sol) | [`0xd1428ba554f4c8450b763a0b2040a4935c63f06c`](https://etherscan.io/address/0xd1428ba554f4c8450b763a0b2040a4935c63f06c) |
+| [PositionManager](https://github.com/Uniswap/v4-periphery/blob/main/src/PositionManager.sol) | [`0xbd216513d74c8cf14cf4747e6aaa6420ff64ee9e`](https://etherscan.io/address/0xbd216513d74c8cf14cf4747e6aaa6420ff64ee9e) |
+| [Quoter](https://github.com/Uniswap/v4-periphery/blob/main/src/lens/V4Quoter.sol) | [`0x52f0e24d1c21c8a0cb1e5a5dd6198556bd9e1203`](https://etherscan.io/address/0x52f0e24d1c21c8a0cb1e5a5dd6198556bd9e1203) |
+| [StateView](https://github.com/Uniswap/v4-periphery/blob/main/src/lens/StateView.sol) | [`0x7ffe42c4a5deea5b0fec41c94c136cf115597227`](https://etherscan.io/address/0x7ffe42c4a5deea5b0fec41c94c136cf115597227) |
+| [Universal Router](https://github.com/Uniswap/universal-router/blob/dev/contracts/UniversalRouter.sol) | [`0x66a9893cc07d91d95644aedd05d03f95e1dba8af`](https://etherscan.io/address/0x66a9893cc07d91d95644aedd05d03f95e1dba8af) |
+
+### Optimism: 10 [​](https://docs.uniswap.org/contracts/v4/deployments\#optimism-10 "Direct link to heading")
+
+| Contract | Address |
+| --- | --- |
+| [PoolManager](https://github.com/Uniswap/v4-core/blob/main/src/PoolManager.sol) | [`0x9a13f98cb987694c9f086b1f5eb990eea8264ec3`](https://optimistic.etherscan.io/address/0x9a13f98cb987694c9f086b1f5eb990eea8264ec3) |
+| [PositionDescriptor](https://github.com/Uniswap/v4-periphery/blob/main/src/PositionDescriptor.sol) | [`0xedd81496169c46df161b8513a52ffecaaaa66743`](https://optimistic.etherscan.io/address/0xedd81496169c46df161b8513a52ffecaaaa66743) |
+| [PositionManager](https://github.com/Uniswap/v4-periphery/blob/main/src/PositionManager.sol) | [`0x3c3ea4b57a46241e54610e5f022e5c45859a1017`](https://optimistic.etherscan.io/address/0x3c3ea4b57a46241e54610e5f022e5c45859a1017) |
+| [Quoter](https://github.com/Uniswap/v4-periphery/blob/main/src/lens/V4Quoter.sol) | [`0x1f3131a13296fb91c90870043742c3cdbff1a8d7`](https://optimistic.etherscan.io/address/0x1f3131a13296fb91c90870043742c3cdbff1a8d7) |
+| [StateView](https://github.com/Uniswap/v4-periphery/blob/main/src/lens/StateView.sol) | [`0xc18a3169788f4f75a170290584eca6395c75ecdb`](https://optimistic.etherscan.io/address/0xc18a3169788f4f75a170290584eca6395c75ecdb) |
+| [Universal Router](https://github.com/Uniswap/universal-router/blob/dev/contracts/UniversalRouter.sol) | [`0x851116d9223fabed8e56c0e6b8ad0c31d98b3507`](https://optimistic.etherscan.io/address/0x851116d9223fabed8e56c0e6b8ad0c31d98b3507) |
+
+### Base: 8453 [​](https://docs.uniswap.org/contracts/v4/deployments\#base-8453 "Direct link to heading")
+
+| Contract | Address |
+| --- | --- |
+| [PoolManager](https://github.com/Uniswap/v4-core/blob/main/src/PoolManager.sol) | [`0x498581ff718922c3f8e6a244956af099b2652b2b`](https://basescan.org/address/0x498581ff718922c3f8e6a244956af099b2652b2b) |
+| [PositionDescriptor](https://github.com/Uniswap/v4-periphery/blob/main/src/PositionDescriptor.sol) | [`0x25d093633990dc94bedeed76c8f3cdaa75f3e7d5`](https://basescan.org/address/0x25d093633990dc94bedeed76c8f3cdaa75f3e7d5) |
+| [PositionManager](https://github.com/Uniswap/v4-periphery/blob/main/src/PositionManager.sol) | [`0x7c5f5a4bbd8fd63184577525326123b519429bdc`](https://basescan.org/address/0x7c5f5a4bbd8fd63184577525326123b519429bdc) |
+| [Quoter](https://github.com/Uniswap/v4-periphery/blob/main/src/lens/V4Quoter.sol) | [`0x0d5e0f971ed27fbff6c2837bf31316121532048d`](https://basescan.org/address/0x0d5e0f971ed27fbff6c2837bf31316121532048d) |
+| [StateView](https://github.com/Uniswap/v4-periphery/blob/main/src/lens/StateView.sol) | [`0xa3c0c9b65bad0b08107aa264b0f3db444b867a71`](https://basescan.org/address/0xa3c0c9b65bad0b08107aa264b0f3db444b867a71) |
+| [Universal Router](https://github.com/Uniswap/universal-router/blob/dev/contracts/UniversalRouter.sol) | [`0x6ff5693b99212da76ad316178a184ab56d299b43`](https://basescan.org/address/0x6ff5693b99212da76ad316178a184ab56d299b43) |
+
+### Arbitrum One: 42161 [​](https://docs.uniswap.org/contracts/v4/deployments\#arbitrum-one-42161 "Direct link to heading")
+
+| Contract | Address |
+| --- | --- |
+| [PoolManager](https://github.com/Uniswap/v4-core/blob/main/src/PoolManager.sol) | [`0x360e68faccca8ca495c1b759fd9eee466db9fb32`](https://arbiscan.io/address/0x360e68faccca8ca495c1b759fd9eee466db9fb32) |
+| [PositionDescriptor](https://github.com/Uniswap/v4-periphery/blob/main/src/PositionDescriptor.sol) | [`0xe2023f3fa515cf070e07fd9d51c1d236e07843f4`](https://arbiscan.io/address/0xe2023f3fa515cf070e07fd9d51c1d236e07843f4) |
+| [PositionManager](https://github.com/Uniswap/v4-periphery/blob/main/src/PositionManager.sol) | [`0xd88f38f930b7952f2db2432cb002e7abbf3dd869`](https://arbiscan.io/address/0xd88f38f930b7952f2db2432cb002e7abbf3dd869) |
+| [Quoter](https://github.com/Uniswap/v4-periphery/blob/main/src/lens/V4Quoter.sol) | [`0x3972c00f7ed4885e145823eb7c655375d275a1c5`](https://arbiscan.io/address/0x3972c00f7ed4885e145823eb7c655375d275a1c5) |
+| [StateView](https://github.com/Uniswap/v4-periphery/blob/main/src/lens/StateView.sol) | [`0x76fd297e2d437cd7f76d50f01afe6160f86e9990`](https://arbiscan.io/address/0x76fd297e2d437cd7f76d50f01afe6160f86e9990) |
+| [Universal Router](https://github.com/Uniswap/universal-router/blob/dev/contracts/UniversalRouter.sol) | [`0xa51afafe0263b40edaef0df8781ea9aa03e381a3`](https://arbiscan.io/address/0xa51afafe0263b40edaef0df8781ea9aa03e381a3) |
+
+### Polygon: 137 [​](https://docs.uniswap.org/contracts/v4/deployments\#polygon-137 "Direct link to heading")
+
+| Contract | Address |
+| --- | --- |
+| [PoolManager](https://github.com/Uniswap/v4-core/blob/main/src/PoolManager.sol) | [`0x67366782805870060151383f4bbff9dab53e5cd6`](https://polygonscan.com/address/0x67366782805870060151383f4bbff9dab53e5cd6) |
+| [PositionDescriptor](https://github.com/Uniswap/v4-periphery/blob/main/src/PositionDescriptor.sol) | [`0x0892771f0c1b78ad6013d6e5536007e1c16e6794`](https://polygonscan.com/address/0x0892771f0c1b78ad6013d6e5536007e1c16e6794) |
+| [PositionManager](https://github.com/Uniswap/v4-periphery/blob/main/src/PositionManager.sol) | [`0x1ec2ebf4f37e7363fdfe3551602425af0b3ceef9`](https://polygonscan.com/address/0x1ec2ebf4f37e7363fdfe3551602425af0b3ceef9) |
+| [Quoter](https://github.com/Uniswap/v4-periphery/blob/main/src/lens/V4Quoter.sol) | [`0xb3d5c3dfc3a7aebff71895a7191796bffc2c81b9`](https://polygonscan.com/address/0xb3d5c3dfc3a7aebff71895a7191796bffc2c81b9) |
+| [StateView](https://github.com/Uniswap/v4-periphery/blob/main/src/lens/StateView.sol) | [`0x5ea1bd7974c8a611cbab0bdcafcb1d9cc9b3ba5a`](https://polygonscan.com/address/0x5ea1bd7974c8a611cbab0bdcafcb1d9cc9b3ba5a) |
+| [Universal Router](https://github.com/Uniswap/universal-router/blob/dev/contracts/UniversalRouter.sol) | [`0x1095692a6237d83c6a72f3f5efedb9a670c49223`](https://polygonscan.com/address/0x1095692a6237d83c6a72f3f5efedb9a670c49223) |
+
+### Blast: 81457 [​](https://docs.uniswap.org/contracts/v4/deployments\#blast-81457 "Direct link to heading")
+
+| Contract | Address |
+| --- | --- |
+| [PoolManager](https://github.com/Uniswap/v4-core/blob/main/src/PoolManager.sol) | [`0x1631559198a9e474033433b2958dabc135ab6446`](https://blastscan.io/address/0x1631559198a9e474033433b2958dabc135ab6446) |
+| [PositionDescriptor](https://github.com/Uniswap/v4-periphery/blob/main/src/PositionDescriptor.sol) | [`0x0747ad2b2e1f5761b1dcf0d8672bd1ffc3676f97`](https://blastscan.io/address/0x0747ad2b2e1f5761b1dcf0d8672bd1ffc3676f97) |
+| [PositionManager](https://github.com/Uniswap/v4-periphery/blob/main/src/PositionManager.sol) | [`0x4ad2f4cca2682cbb5b950d660dd458a1d3f1baad`](https://blastscan.io/address/0x4ad2f4cca2682cbb5b950d660dd458a1d3f1baad) |
+| [Quoter](https://github.com/Uniswap/v4-periphery/blob/main/src/lens/V4Quoter.sol) | [`0x6f71cdcb0d119ff72c6eb501abceb576fbf62bcf`](https://blastscan.io/address/0x6f71cdcb0d119ff72c6eb501abceb576fbf62bcf) |
+| [StateView](https://github.com/Uniswap/v4-periphery/blob/main/src/lens/StateView.sol) | [`0x12a88ae16f46dce4e8b15368008ab3380885df30`](https://blastscan.io/address/0x12a88ae16f46dce4e8b15368008ab3380885df30) |
+| [Universal Router](https://github.com/Uniswap/universal-router/blob/dev/contracts/UniversalRouter.sol) | [`0xeabbcb3e8e415306207ef514f660a3f820025be3`](https://blastscan.io/address/0xeabbcb3e8e415306207ef514f660a3f820025be3) |
+
+### Zora: 7777777 [​](https://docs.uniswap.org/contracts/v4/deployments\#zora-7777777 "Direct link to heading")
+
+| Contract | Address |
+| --- | --- |
+| [PoolManager](https://github.com/Uniswap/v4-core/blob/main/src/PoolManager.sol) | [`0x0575338e4c17006ae181b47900a84404247ca30f`](https://explorer.zora.energy/address/0x0575338e4c17006ae181b47900a84404247ca30f) |
+| [PositionDescriptor](https://github.com/Uniswap/v4-periphery/blob/main/src/PositionDescriptor.sol) | [`0x7d64630bbb4993b5578dbd65e400961c9e68d55a`](https://explorer.zora.energy/address/0x7d64630bbb4993b5578dbd65e400961c9e68d55a) |
+| [PositionManager](https://github.com/Uniswap/v4-periphery/blob/main/src/PositionManager.sol) | [`0xf66c7b99e2040f0d9b326b3b7c152e9663543d63`](https://explorer.zora.energy/address/0xf66c7b99e2040f0d9b326b3b7c152e9663543d63) |
+| [Quoter](https://github.com/Uniswap/v4-periphery/blob/main/src/lens/V4Quoter.sol) | [`0x5edaccc0660e0a2c44b06e07ce8b915e625dc2c6`](https://explorer.zora.energy/address/0x5edaccc0660e0a2c44b06e07ce8b915e625dc2c6) |
+| [StateView](https://github.com/Uniswap/v4-periphery/blob/main/src/lens/StateView.sol) | [`0x385785af07d63b50d0a0ea57c4ff89d06adf7328`](https://explorer.zora.energy/address/0x385785af07d63b50d0a0ea57c4ff89d06adf7328) |
+| [Universal Router](https://github.com/Uniswap/universal-router/blob/dev/contracts/UniversalRouter.sol) | [`0x3315ef7ca28db74abadc6c44570efdf06b04b020`](https://explorer.zora.energy/address/0x3315ef7ca28db74abadc6c44570efdf06b04b020) |
+
+### Worldchain: 480 [​](https://docs.uniswap.org/contracts/v4/deployments\#worldchain-480 "Direct link to heading")
+
+| Contract | Address |
+| --- | --- |
+| [PoolManager](https://github.com/Uniswap/v4-core/blob/main/src/PoolManager.sol) | [`0xb1860d529182ac3bc1f51fa2abd56662b7d13f33`](https://worldscan.org/address/0xb1860d529182ac3bc1f51fa2abd56662b7d13f33) |
+| [PositionDescriptor](https://github.com/Uniswap/v4-periphery/blob/main/src/PositionDescriptor.sol) | [`0x7da419153bd420b689f312363756d76836aeace4`](https://worldscan.org/address/0x7da419153bd420b689f312363756d76836aeace4) |
+| [PositionManager](https://github.com/Uniswap/v4-periphery/blob/main/src/PositionManager.sol) | [`0xc585e0f504613b5fbf874f21af14c65260fb41fa`](https://worldscan.org/address/0xc585e0f504613b5fbf874f21af14c65260fb41fa) |
+| [Quoter](https://github.com/Uniswap/v4-periphery/blob/main/src/lens/V4Quoter.sol) | [`0x55d235b3ff2daf7c3ede0defc9521f1d6fe6c5c0`](https://worldscan.org/address/0x55d235b3ff2daf7c3ede0defc9521f1d6fe6c5c0) |
+| [StateView](https://github.com/Uniswap/v4-periphery/blob/main/src/lens/StateView.sol) | [`0x51d394718bc09297262e368c1a481217fdeb71eb`](https://worldscan.org/address/0x51d394718bc09297262e368c1a481217fdeb71eb) |
+| [Universal Router](https://github.com/Uniswap/universal-router/blob/dev/contracts/UniversalRouter.sol) | [`0x8ac7bee993bb44dab564ea4bc9ea67bf9eb5e743`](https://worldscan.org/address/0x8ac7bee993bb44dab564ea4bc9ea67bf9eb5e743) |
+
+### Ink: 57073 [​](https://docs.uniswap.org/contracts/v4/deployments\#ink-57073 "Direct link to heading")
+
+| Contract | Address |
+| --- | --- |
+| [PoolManager](https://github.com/Uniswap/v4-core/blob/main/src/PoolManager.sol) | [`0x360e68faccca8ca495c1b759fd9eee466db9fb32`](https://explorer.inkonchain.com/address/0x360e68faccca8ca495c1b759fd9eee466db9fb32) |
+| [PositionDescriptor](https://github.com/Uniswap/v4-periphery/blob/main/src/PositionDescriptor.sol) | [`0x42e3ccd9b7f67b5b2ee0c12074b84ccf2a8e7f36`](https://explorer.inkonchain.com/address/0x42e3ccd9b7f67b5b2ee0c12074b84ccf2a8e7f36) |
+| [PositionManager](https://github.com/Uniswap/v4-periphery/blob/main/src/PositionManager.sol) | [`0x1b35d13a2e2528f192637f14b05f0dc0e7deb566`](https://explorer.inkonchain.com/address/0x1b35d13a2e2528f192637f14b05f0dc0e7deb566) |
+| [Quoter](https://github.com/Uniswap/v4-periphery/blob/main/src/lens/V4Quoter.sol) | [`0x3972c00f7ed4885e145823eb7c655375d275a1c5`](https://explorer.inkonchain.com/address/0x3972c00f7ed4885e145823eb7c655375d275a1c5) |
+| [StateView](https://github.com/Uniswap/v4-periphery/blob/main/src/lens/StateView.sol) | [`0x76fd297e2d437cd7f76d50f01afe6160f86e9990`](https://explorer.inkonchain.com/address/0x76fd297e2d437cd7f76d50f01afe6160f86e9990) |
+| [Universal Router](https://github.com/Uniswap/universal-router/blob/dev/contracts/UniversalRouter.sol) | [`0x112908dac86e20e7241b0927479ea3bf935d1fa0`](https://explorer.inkonchain.com/address/0x112908dac86e20e7241b0927479ea3bf935d1fa0) |
+
+### Soneium: 1868 [​](https://docs.uniswap.org/contracts/v4/deployments\#soneium-1868 "Direct link to heading")
+
+| Contract | Address |
+| --- | --- |
+| [PoolManager](https://github.com/Uniswap/v4-core/blob/main/src/PoolManager.sol) | [`0x360e68faccca8ca495c1b759fd9eee466db9fb32`](https://soneium.blockscout.com/address/0x360e68faccca8ca495c1b759fd9eee466db9fb32) |
+| [PositionDescriptor](https://github.com/Uniswap/v4-periphery/blob/main/src/PositionDescriptor.sol) | [`0x42e3ccd9b7f67b5b2ee0c12074b84ccf2a8e7f36`](https://soneium.blockscout.com/address/0x42e3ccd9b7f67b5b2ee0c12074b84ccf2a8e7f36) |
+| [PositionManager](https://github.com/Uniswap/v4-periphery/blob/main/src/PositionManager.sol) | [`0x1b35d13a2e2528f192637f14b05f0dc0e7deb566`](https://soneium.blockscout.com/address/0x1b35d13a2e2528f192637f14b05f0dc0e7deb566) |
+| [Quoter](https://github.com/Uniswap/v4-periphery/blob/main/src/lens/V4Quoter.sol) | [`0x3972c00f7ed4885e145823eb7c655375d275a1c5`](https://soneium.blockscout.com/address/0x3972c00f7ed4885e145823eb7c655375d275a1c5) |
+| [StateView](https://github.com/Uniswap/v4-periphery/blob/main/src/lens/StateView.sol) | [`0x76fd297e2d437cd7f76d50f01afe6160f86e9990`](https://soneium.blockscout.com/address/0x76fd297e2d437cd7f76d50f01afe6160f86e9990) |
+| [Universal Router](https://github.com/Uniswap/universal-router/blob/dev/contracts/UniversalRouter.sol) | [`0x4cded7edf52c8aa5259a54ec6a3ce7c6d2a455df`](https://soneium.blockscout.com/address/0x4cded7edf52c8aa5259a54ec6a3ce7c6d2a455df) |
+
+### Avalanche: 43114 [​](https://docs.uniswap.org/contracts/v4/deployments\#avalanche-43114 "Direct link to heading")
+
+| Contract | Address |
+| --- | --- |
+| [PoolManager](https://github.com/Uniswap/v4-core/blob/main/src/PoolManager.sol) | [`0x06380c0e0912312b5150364b9dc4542ba0dbbc85`](https://snowscan.xyz/address/0x06380c0e0912312b5150364b9dc4542ba0dbbc85) |
+| [PositionDescriptor](https://github.com/Uniswap/v4-periphery/blob/main/src/PositionDescriptor.sol) | [`0x2b1aed9445b05ac1a3b203eccc1e25dd9351f0a9`](https://snowscan.xyz/address/0x2b1aed9445b05ac1a3b203eccc1e25dd9351f0a9) |
+| [PositionManager](https://github.com/Uniswap/v4-periphery/blob/main/src/PositionManager.sol) | [`0xb74b1f14d2754acfcbbe1a221023a5cf50ab8acd`](https://snowscan.xyz/address/0xb74b1f14d2754acfcbbe1a221023a5cf50ab8acd) |
+| [Quoter](https://github.com/Uniswap/v4-periphery/blob/main/src/lens/V4Quoter.sol) | [`0xbe40675bb704506a3c2ccfb762dcfd1e979845c2`](https://snowscan.xyz/address/0xbe40675bb704506a3c2ccfb762dcfd1e979845c2) |
+| [StateView](https://github.com/Uniswap/v4-periphery/blob/main/src/lens/StateView.sol) | [`0xc3c9e198c735a4b97e3e683f391ccbdd60b69286`](https://snowscan.xyz/address/0xc3c9e198c735a4b97e3e683f391ccbdd60b69286) |
+| [Universal Router](https://github.com/Uniswap/universal-router/blob/dev/contracts/UniversalRouter.sol) | [`0x94b75331ae8d42c1b61065089b7d48fe14aa73b7`](https://snowscan.xyz/address/0x94b75331ae8d42c1b61065089b7d48fe14aa73b7) |
+
+### BNB Smart Chain: 56 [​](https://docs.uniswap.org/contracts/v4/deployments\#bnb-smart-chain-56 "Direct link to heading")
+
+| Contract | Address |
+| --- | --- |
+| [PoolManager](https://github.com/Uniswap/v4-core/blob/main/src/PoolManager.sol) | [`0x28e2ea090877bf75740558f6bfb36a5ffee9e9df`](https://bscscan.com/address/0x28e2ea090877bf75740558f6bfb36a5ffee9e9df) |
+| [PositionDescriptor](https://github.com/Uniswap/v4-periphery/blob/main/src/PositionDescriptor.sol) | [`0xf0432f360703ec3d33931a8356a75a77d8d380e1`](https://bscscan.com/address/0xf0432f360703ec3d33931a8356a75a77d8d380e1) |
+| [PositionManager](https://github.com/Uniswap/v4-periphery/blob/main/src/PositionManager.sol) | [`0x7a4a5c919ae2541aed11041a1aeee68f1287f95b`](https://bscscan.com/address/0x7a4a5c919ae2541aed11041a1aeee68f1287f95b) |
+| [Quoter](https://github.com/Uniswap/v4-periphery/blob/main/src/lens/V4Quoter.sol) | [`0x9f75dd27d6664c475b90e105573e550ff69437b0`](https://bscscan.com/address/0x9f75dd27d6664c475b90e105573e550ff69437b0) |
+| [StateView](https://github.com/Uniswap/v4-periphery/blob/main/src/lens/StateView.sol) | [`0xd13dd3d6e93f276fafc9db9e6bb47c1180aee0c4`](https://bscscan.com/address/0xd13dd3d6e93f276fafc9db9e6bb47c1180aee0c4) |
+| [Universal Router](https://github.com/Uniswap/universal-router/blob/dev/contracts/UniversalRouter.sol) | [`0x1906c1d672b88cd1b9ac7593301ca990f94eae07`](https://bscscan.com/address/0x1906c1d672b88cd1b9ac7593301ca990f94eae07) |
+
+## Testnet Deployments [​](https://docs.uniswap.org/contracts/v4/deployments\#testnet-deployments "Direct link to heading")
+
+### Unichain Sepolia: 1301 [​](https://docs.uniswap.org/contracts/v4/deployments\#unichain-sepolia-1301 "Direct link to heading")
+
+| Contract | Address |
+| --- | --- |
+| [PoolManager](https://github.com/Uniswap/v4-core/blob/main/src/PoolManager.sol) | [`0x00b036b58a818b1bc34d502d3fe730db729e62ac`](https://sepolia.uniscan.xyz/address/0x00b036b58a818b1bc34d502d3fe730db729e62ac#code) |
+| [Universal Router](https://github.com/Uniswap/universal-router/blob/dev/contracts/UniversalRouter.sol) | [`0xf70536b3bcc1bd1a972dc186a2cf84cc6da6be5d`](https://sepolia.uniscan.xyz/address/0xf70536b3bcc1bd1a972dc186a2cf84cc6da6be5d#code) |
+| [PositionManager](https://github.com/Uniswap/v4-periphery/blob/main/src/PositionManager.sol) | [`0xf969aee60879c54baaed9f3ed26147db216fd664`](https://sepolia.uniscan.xyz/address/0xf969aee60879c54baaed9f3ed26147db216fd664#code) |
+| [StateView](https://github.com/Uniswap/v4-periphery/blob/main/src/lens/StateView.sol) | [`0xc199f1072a74d4e905aba1a84d9a45e2546b6222`](https://sepolia.uniscan.xyz/address/0xc199f1072a74d4e905aba1a84d9a45e2546b6222#code) |
+| [Quoter](https://github.com/Uniswap/v4-periphery/blob/main/src/lens/V4Quoter.sol) | [`0x56dcd40a3f2d466f48e7f48bdbe5cc9b92ae4472`](https://sepolia.uniscan.xyz/address/0x56dcd40a3f2d466f48e7f48bdbe5cc9b92ae4472#code) |
+| [PoolSwapTest](https://github.com/Uniswap/v4-core/blob/main/src/test/PoolSwapTest.sol) | [`0x9140a78c1a137c7ff1c151ec8231272af78a99a4`](https://sepolia.uniscan.xyz/address/0x9140a78c1a137c7ff1c151ec8231272af78a99a4#code) |
+| [PoolModifyLiquidityTest](https://github.com/Uniswap/v4-core/blob/main/src/test/PoolModifyLiquidityTest.sol) | [`0x5fa728c0a5cfd51bee4b060773f50554c0c8a7ab`](https://sepolia.uniscan.xyz/address/0x5fa728c0a5cfd51bee4b060773f50554c0c8a7ab#code) |
+
+### Sepolia: 11155111 [​](https://docs.uniswap.org/contracts/v4/deployments\#sepolia-11155111 "Direct link to heading")
+
+| Contract | Address |
+| --- | --- |
+| [PoolManager](https://github.com/Uniswap/v4-core/blob/main/src/PoolManager.sol) | [`0xE03A1074c86CFeDd5C142C4F04F1a1536e203543`](https://sepolia.etherscan.io/address/0xE03A1074c86CFeDd5C142C4F04F1a1536e203543#code) |
+| [Universal Router](https://github.com/Uniswap/universal-router/blob/dev/contracts/UniversalRouter.sol) | [`0x3a9d48ab9751398bbfa63ad67599bb04e4bdf98b`](https://sepolia.etherscan.io/address/0x3a9d48ab9751398bbfa63ad67599bb04e4bdf98b#code) |
+| [PositionManager](https://github.com/Uniswap/v4-periphery/blob/main/src/PositionManager.sol) | [`0x429ba70129df741B2Ca2a85BC3A2a3328e5c09b4`](https://sepolia.etherscan.io/address/0x429ba70129df741B2Ca2a85BC3A2a3328e5c09b4#code) |
+| [StateView](https://github.com/Uniswap/v4-periphery/blob/main/src/lens/StateView.sol) | [`0xe1dd9c3fa50edb962e442f60dfbc432e24537e4c`](https://sepolia.etherscan.io/address/0xe1dd9c3fa50edb962e442f60dfbc432e24537e4c#code) |
+| [Quoter](https://github.com/Uniswap/v4-periphery/blob/main/src/lens/V4Quoter.sol) | [`0x61b3f2011a92d183c7dbadbda940a7555ccf9227`](https://sepolia.etherscan.io/address/0x61b3f2011a92d183c7dbadbda940a7555ccf9227#code) |
+| [PoolSwapTest](https://github.com/Uniswap/v4-core/blob/main/src/test/PoolSwapTest.sol) | [`0x9b6b46e2c869aa39918db7f52f5557fe577b6eee`](https://sepolia.etherscan.io/address/0x9b6b46e2c869aa39918db7f52f5557fe577b6eee#code) |
+| [PoolModifyLiquidityTest](https://github.com/Uniswap/v4-core/blob/main/src/test/PoolModifyLiquidityTest.sol) | [`0x0c478023803a644c94c4ce1c1e7b9a087e411b0a`](https://sepolia.etherscan.io/address/0x0c478023803a644c94c4ce1c1e7b9a087e411b0a#code) |
+
+### Base Sepolia: 84532 [​](https://docs.uniswap.org/contracts/v4/deployments\#base-sepolia-84532 "Direct link to heading")
+
+| Contract | Address |
+| --- | --- |
+| [PoolManager](https://github.com/Uniswap/v4-core/blob/main/src/PoolManager.sol) | [`0x05E73354cFDd6745C338b50BcFDfA3Aa6fA03408`](https://sepolia.basescan.org/address/0x05E73354cFDd6745C338b50BcFDfA3Aa6fA03408#code) |
+| [Universal Router](https://github.com/Uniswap/universal-router/blob/dev/contracts/UniversalRouter.sol) | [`0x492e6456d9528771018deb9e87ef7750ef184104`](https://sepolia.basescan.org/address/0x492e6456d9528771018deb9e87ef7750ef184104#code) |
+| [PositionManager](https://github.com/Uniswap/v4-periphery/blob/main/src/PositionManager.sol) | [`0x4b2c77d209d3405f41a037ec6c77f7f5b8e2ca80`](https://sepolia.basescan.org/address/0x4b2c77d209d3405f41a037ec6c77f7f5b8e2ca80#code) |
+| [StateView](https://github.com/Uniswap/v4-periphery/blob/main/src/lens/StateView.sol) | [`0x571291b572ed32ce6751a2cb2486ebee8defb9b4`](https://sepolia.basescan.org/address/0x571291b572ed32ce6751a2cb2486ebee8defb9b4#code) |
+| [Quoter](https://github.com/Uniswap/v4-periphery/blob/main/src/lens/V4Quoter.sol) | [`0x4a6513c898fe1b2d0e78d3b0e0a4a151589b1cba`](https://sepolia.basescan.org/address/0x4a6513c898fe1b2d0e78d3b0e0a4a151589b1cba#code) |
+| [PoolSwapTest](https://github.com/Uniswap/v4-core/blob/main/src/test/PoolSwapTest.sol) | [`0x8b5bcc363dde2614281ad875bad385e0a785d3b9`](https://sepolia.basescan.org/address/0x8b5bcc363dde2614281ad875bad385e0a785d3b9#code) |
+| [PoolModifyLiquidityTest](https://github.com/Uniswap/v4-core/blob/main/src/test/PoolModifyLiquidityTest.sol) | [`0x37429cd17cb1454c34e7f50b09725202fd533039`](https://sepolia.basescan.org/address/0x37429cd17cb1454c34e7f50b09725202fd533039#code) |
+
+### Arbitrum Sepolia: 421614 [​](https://docs.uniswap.org/contracts/v4/deployments\#arbitrum-sepolia-421614 "Direct link to heading")
+
+| Contract | Address |
+| --- | --- |
+| [PoolManager](https://github.com/Uniswap/v4-core/blob/main/src/PoolManager.sol) | [`0xFB3e0C6F74eB1a21CC1Da29aeC80D2Dfe6C9a317`](https://sepolia.basescan.org/address/0xFB3e0C6F74eB1a21CC1Da29aeC80D2Dfe6C9a317#code) |
+| [Universal Router](https://github.com/Uniswap/universal-router/blob/dev/contracts/UniversalRouter.sol) | [`0xefd1d4bd4cf1e86da286bb4cb1b8bced9c10ba47`](https://sepolia.basescan.org/address/0xefd1d4bd4cf1e86da286bb4cb1b8bced9c10ba47#code) |
+| [PositionManager](https://github.com/Uniswap/v4-periphery/blob/main/src/PositionManager.sol) | [`0xAc631556d3d4019C95769033B5E719dD77124BAc`](https://sepolia.basescan.org/address/0xAc631556d3d4019C95769033B5E719dD77124BAc#code) |
+| [StateView](https://github.com/Uniswap/v4-periphery/blob/main/src/lens/StateView.sol) | [`0x9d467fa9062b6e9b1a46e26007ad82db116c67cb`](https://sepolia.basescan.org/address/0x9d467fa9062b6e9b1a46e26007ad82db116c67cb#code) |
+| [Quoter](https://github.com/Uniswap/v4-periphery/blob/main/src/lens/V4Quoter.sol) | [`0x7de51022d70a725b508085468052e25e22b5c4c9`](https://sepolia.basescan.org/address/0x7de51022d70a725b508085468052e25e22b5c4c9#code) |
+| [PoolSwapTest](https://github.com/Uniswap/v4-core/blob/main/src/test/PoolSwapTest.sol) | [`0xf3a39c86dbd13c45365e57fb90fe413371f65af8`](https://sepolia.basescan.org/address/0xf3a39c86dbd13c45365e57fb90fe413371f65af8#code) |
+| [PoolModifyLiquidityTest](https://github.com/Uniswap/v4-core/blob/main/src/test/PoolModifyLiquidityTest.sol) | [`0x9a8ca723f5dccb7926d00b71dec55c2fea1f50f7`](https://sepolia.basescan.org/address/0x9a8ca723f5dccb7926d00b71dec55c2fea1f50f7#code) |
+
+- [Mainnet Deployments](https://docs.uniswap.org/contracts/v4/deployments#mainnet-deployments)
+  - [Ethereum: 1](https://docs.uniswap.org/contracts/v4/deployments#ethereum-1)
+  - [Optimism: 10](https://docs.uniswap.org/contracts/v4/deployments#optimism-10)
+  - [Base: 8453](https://docs.uniswap.org/contracts/v4/deployments#base-8453)
+  - [Arbitrum One: 42161](https://docs.uniswap.org/contracts/v4/deployments#arbitrum-one-42161)
+  - [Polygon: 137](https://docs.uniswap.org/contracts/v4/deployments#polygon-137)
+  - [Blast: 81457](https://docs.uniswap.org/contracts/v4/deployments#blast-81457)
+  - [Zora: 7777777](https://docs.uniswap.org/contracts/v4/deployments#zora-7777777)
+  - [Worldchain: 480](https://docs.uniswap.org/contracts/v4/deployments#worldchain-480)
+  - [Ink: 57073](https://docs.uniswap.org/contracts/v4/deployments#ink-57073)
+  - [Soneium: 1868](https://docs.uniswap.org/contracts/v4/deployments#soneium-1868)
+  - [Avalanche: 43114](https://docs.uniswap.org/contracts/v4/deployments#avalanche-43114)
+  - [BNB Smart Chain: 56](https://docs.uniswap.org/contracts/v4/deployments#bnb-smart-chain-56)
+- [Testnet Deployments](https://docs.uniswap.org/contracts/v4/deployments#testnet-deployments)
+  - [Unichain Sepolia: 1301](https://docs.uniswap.org/contracts/v4/deployments#unichain-sepolia-1301)
+  - [Sepolia: 11155111](https://docs.uniswap.org/contracts/v4/deployments#sepolia-11155111)
+  - [Base Sepolia: 84532](https://docs.uniswap.org/contracts/v4/deployments#base-sepolia-84532)
+  - [Arbitrum Sepolia: 421614](https://docs.uniswap.org/contracts/v4/deployments#arbitrum-sepolia-421614)

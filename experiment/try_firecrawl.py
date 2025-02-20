@@ -16,7 +16,7 @@ try:
     
     # Using the correct parameters as per documentation
     response = app.crawl_url(
-        'https://docs.firecrawl.dev/features/crawl',
+        'https://docs.uniswap.org/contracts/v4/overview',
         params={
             'scrapeOptions': {'formats': ['markdown']},
             'limit': 100  # Optional: limit the number of pages to crawl
