@@ -11,9 +11,13 @@ __pycache__/
 # OS specific
 .DS_Store
 .env
+ibkr/clientportal.gw/logs/
+
+# Data
 output.json
 spot_data.json
-
 data/uso/order-book/
-ibkr/clientportal.gw/logs/
 futures-data.git/
+
+# Documentation
+docs/
