@@ -1,7 +1,7 @@
 # Python virtual environment
-myenv_312/
 venv/
 env/
+contracts/.env
 
 # Python
 __pycache__/
