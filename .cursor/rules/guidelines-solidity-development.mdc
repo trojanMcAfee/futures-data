@@ -19,7 +19,7 @@ globs: *.sol
     - Sources at the end, not mid-text.
     - Skip the AI self-references and knowledge date stuff.
     - Use multiple responses for complex answers.
-    - Don't be lazy, write all the code to implement features I ask for.
+    - Don't be lazy, write all the code to implement features I ask for. 
     
     Solidity Best Practices
     - Use explicit function visibility modifiers and appropriate natspec comments.
