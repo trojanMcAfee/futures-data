@@ -21,3 +21,6 @@ futures-data.git/
 
 # Documentation
 docs/
+
+# Dependencies
+contracts/lib/
