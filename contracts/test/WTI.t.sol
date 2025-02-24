@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import {Test, console2} from "forge-std/Test.sol";
 import {WTI} from "../src/WTI.sol";
 import {AggregatorV3Interface} from "../src/interfaces/AggregatorV3Interface.sol";
+import {IUniswapV3Factory, IUniswapV3Pool} from "../src/interfaces/IUniswapV3.sol";
 
 contract WTITest is Test {
     WTI public wti;
@@ -73,5 +74,60 @@ contract WTITest is Test {
         require(price > 0, "Invalid price");
         require(updatedAt > 0, "Round not complete");
         require(answeredInRound >= roundId, "Stale price");
+    }
+
+    function test_CreateUniswapV3Pool() public {
+        // Import required interfaces
+        IUniswapV3Factory factory = IUniswapV3Factory(0x1F98431c8aD98523631AE4a59f267346ea31F984);
+        
+        // USDC address on Ethereum mainnet
+        address USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
+        
+        // Create pool with 0.05% fee
+        uint24 fee = 500;
+        
+        // Create pool with USDC as token0 (lower address) and WTI as token1
+        address poolAddress = factory.createPool(USDC, address(wti), fee);
+        IUniswapV3Pool pool = IUniswapV3Pool(poolAddress);
+        
+        // Calculate initial sqrtPriceX96 for price of 70 USDC/WTI
+        // For price of 70 USDC/WTI, we need sqrtP = sqrt(1/70) * 2^96
+        uint256 targetPrice = 70;
+        uint256 numerator = 1 << 192;
+        uint256 denominator = targetPrice;
+        uint256 priceRatio = numerator / denominator;
+        uint160 sqrtPriceX96 = uint160(sqrt(priceRatio));
+        
+        // Initialize pool with calculated sqrtPriceX96
+        pool.initialize(sqrtPriceX96);
+        
+        // Get current price from pool
+        (uint160 currentSqrtPriceX96,,,,,,) = pool.slot0();
+        
+        // Calculate and verify price
+        uint256 price = (1e12 * (1 << 192)) / (uint256(currentSqrtPriceX96) * uint256(currentSqrtPriceX96));
+        
+        // Log results
+        console2.log("Pool address:", poolAddress);
+        console2.log("WTI/USDC Price:", price);
+        
+        // Verify price is close to 70 (allowing for some rounding error)
+        assertApproxEqAbs(price, 70, 1);
+    }
+
+    // Helper function to calculate square root
+    function sqrt(uint256 x) private pure returns (uint256 y) {
+        if (x == 0) return 0;
+        
+        // Using the Babylonian method for square root
+        // Start with x as initial estimate
+        y = x;
+        uint256 z = (y + (x / y)) >> 1;
+        
+        // Keep improving the estimate until we converge
+        while (z < y) {
+            y = z;
+            z = (y + (x / y)) >> 1;
+        }
     }
 } 
