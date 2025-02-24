@@ -183,7 +183,7 @@ contract UniswapV3PriceTest is Test {
         console2.log("Target tick:", targetTick);
         
         // Get the exact sqrtPriceX96 for this tick to ensure it's valid
-        // uint160 exactSqrtPriceX96 = TickMath.getSqrtRatioAtTick(targetTick);
+        uint160 exactSqrtPriceX96 = TickMath.getSqrtRatioAtTick(targetTick);
         console2.log("Exact sqrtPriceX96:", TickMath.getSqrtRatioAtTick(targetTick));
         
         // Calculate token amounts using smaller ranges to avoid overflow
@@ -195,7 +195,7 @@ contract UniswapV3PriceTest is Test {
         // uint160 upperSqrtPriceX96 = TickMath.getSqrtRatioAtTick(upperTick);
         
         uint256 amount0 = SqrtPriceMath.getAmount0Delta(
-            TickMath.getSqrtRatioAtTick(targetTick),
+            exactSqrtPriceX96,
             TickMath.getSqrtRatioAtTick(targetTick + 10),
             currentLiquidity,
             false // roundUp
@@ -203,7 +203,7 @@ contract UniswapV3PriceTest is Test {
         
         uint256 amount1 = SqrtPriceMath.getAmount1Delta(
             TickMath.getSqrtRatioAtTick(targetTick - 10),
-            TickMath.getSqrtRatioAtTick(targetTick),
+            exactSqrtPriceX96,
             currentLiquidity,
             false // roundUp
         );
@@ -211,8 +211,8 @@ contract UniswapV3PriceTest is Test {
         console2.log("USDC amount needed:", amount0 / 1e6, "USDC");
         console2.log("WETH amount needed:", amount1 / 1e18, "WETH");
         
-        // Verify the resulting price
-        uint256 verificationPrice = (1e12 * (1 << 192)) / (uint256(TickMath.getSqrtRatioAtTick(targetTick)) * uint256(TickMath.getSqrtRatioAtTick(targetTick)));
+        // Verify the resulting price using the same calculation as testGetPrice()
+        uint256 verificationPrice = (1e12 * (1 << 192)) / (uint256(exactSqrtPriceX96) * uint256(exactSqrtPriceX96));
         console2.log("\nVerification:");
         console2.log("Resulting price:", verificationPrice, "USDC/ETH");
     }
