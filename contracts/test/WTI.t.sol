@@ -54,8 +54,7 @@ contract WTITest is Test {
         // Get the latest price data
         (
             uint80 roundId,
-            int256 price,
-            uint256 startedAt,
+            int256 price,,
             uint256 updatedAt,
             uint80 answeredInRound
         ) = priceFeed.latestRoundData();
@@ -77,6 +76,9 @@ contract WTITest is Test {
     }
 
     function test_CreateUniswapV3Pool() public {
+        // Fork Ethereum mainnet at a recent block
+        vm.createSelectFork(vm.envString("MAINNET_RPC_URL"));
+        
         // Import required interfaces
         IUniswapV3Factory factory = IUniswapV3Factory(0x1F98431c8aD98523631AE4a59f267346ea31F984);
         
@@ -85,6 +87,13 @@ contract WTITest is Test {
         
         // Create pool with 0.05% fee
         uint24 fee = 500;
+        
+        // Deploy WTI token again on the forked network
+        vm.startPrank(deployer);
+        wti = new WTI();
+        
+        // Ensure WTI has some initial liquidity
+        require(wti.balanceOf(deployer) > 0, "No WTI balance");
         
         // Create pool with USDC as token0 (lower address) and WTI as token1
         address poolAddress = factory.createPool(USDC, address(wti), fee);
@@ -100,19 +109,26 @@ contract WTITest is Test {
         
         // Initialize pool with calculated sqrtPriceX96
         pool.initialize(sqrtPriceX96);
+        vm.stopPrank();
         
         // Get current price from pool
         (uint160 currentSqrtPriceX96,,,,,,) = pool.slot0();
         
         // Calculate and verify price
+        // Price = (1/p) * 10^(decimals1 - decimals0)
+        // where decimals1 = 18 (WTI) and decimals0 = 6 (USDC)
         uint256 price = (1e12 * (1 << 192)) / (uint256(currentSqrtPriceX96) * uint256(currentSqrtPriceX96));
+        
+        // Adjust price for decimals (divide by 1e12 since we multiplied by 1e12 above)
+        uint256 adjustedPrice = price / 1e12;
         
         // Log results
         console2.log("Pool address:", poolAddress);
         console2.log("WTI/USDC Price:", price);
+        console2.log("WTI/USDC adjustedPrice:", adjustedPrice);
         
         // Verify price is close to 70 (allowing for some rounding error)
-        assertApproxEqAbs(price, 70, 1);
+        assertApproxEqAbs(adjustedPrice, 70, 1);
     }
 
     // Helper function to calculate square root
