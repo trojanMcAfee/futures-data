@@ -14,6 +14,7 @@ import {INonfungiblePositionManager} from "../src/interfaces/INonfungiblePositio
 import {WTILiquidityProvider} from "../src/WTILiquidityProvider.sol";
 import {Helpers} from "./Helpers.sol";
 
+
 contract WTITest is Test {
     WTI public wti;
     address public deployer;
@@ -84,9 +85,6 @@ contract WTITest is Test {
             uint256 updatedAt,
             uint80 answeredInRound
         ) = priceFeed.latestRoundData();
-
-        
-        // Remove console logging
         
         // Make sure we got a valid price
         require(price > 0, "Invalid price");
@@ -127,11 +125,6 @@ contract WTITest is Test {
         
         // Target price: 70.415 USDC per WTI
         uint256 targetPrice = 70415000; // 70.415 * 1e6
-        
-        // Calculate sqrtPriceX96 for WTI as token0 and USDC as token1
-        // sqrtPriceX96 = sqrt(targetPrice/1e6) * 2^96 = sqrt(targetPrice)/1e3 * 2^96
-        // uint256 sqrtTarget = sqrt(targetPrice);
-        // uint160 sqrtPriceX96 = uint160(FullMath.mulDiv(sqrtTarget, 1 << 96, 1e3));
         uint160 sqrtPriceX96 = 664832398952738400000000;
         
         // Log the initial sqrtPriceX96 value
@@ -153,6 +146,9 @@ contract WTITest is Test {
         
         // Verify the price is within an acceptable range
         assertApproxEqAbs(calculatedPrice, targetPrice, targetPrice / 100); // Allow 1% deviation
+
+        console.log('--------------------------------');
+        console.log('--------------------------------');
     }
 
     function test_AddLiquidityToPool() public {
@@ -173,5 +169,8 @@ contract WTITest is Test {
         
         // Log the results
         helpers.logPoolState(poolAddress, pool);
+
+        console.log('--------------------------------');
+        console.log('--------------------------------');
     }
 } 

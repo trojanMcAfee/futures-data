@@ -200,9 +200,7 @@ contract Helpers is Test {
         
         // Calculate the updated price
         uint256 updatedPrice = calculateWTIprice(updatedSqrtPriceX96);
-        
-        console.log("Updated WTI price in USDC:", updatedPrice, "USDC (6 decimals)");
-        
+                
         // Get token balances in the pool
         uint256 wtiBalance = IERC20(address(wti)).balanceOf(poolAddress);
         uint256 usdcBalance = IERC20(USDC).balanceOf(poolAddress);
