@@ -99,13 +99,24 @@ contract WTITest is Test {
         address poolAddress = factory.createPool(USDC, address(wti), fee);
         IUniswapV3Pool pool = IUniswapV3Pool(poolAddress);
         
-        // Calculate initial sqrtPriceX96 for price of 70 USDC/WTI
-        // For price of 70 USDC/WTI, we need sqrtP = sqrt(1/70) * 2^96
-        uint256 targetPrice = 70;
-        uint256 numerator = 1 << 192;
-        uint256 denominator = targetPrice;
-        uint256 priceRatio = numerator / denominator;
-        uint160 sqrtPriceX96 = uint160(sqrt(priceRatio));
+        // Calculate initial sqrtPriceX96 for price of 70.415 USDC/WTI
+        // To correctly set the price, we need to account for the decimal difference
+        // USDC (token0) has 6 decimals, WTI (token1) has 18 decimals
+        
+        // Target price: 70.415 USDC per WTI
+        uint256 targetPrice = 70415000; // 70.415 * 1e6
+        
+        // In Uniswap V3, sqrtPriceX96 is calculated as sqrt(price) * 2^96
+        // where price = price1/price0 adjusted for decimals
+        
+        // For a price of 70.415 USDC per WTI:
+        // 1. Calculate price1/price0 = 1/70.415 = 0.0142 (approximately)
+        // 2. Adjust for decimal difference: 0.0142 * 10^(6-18) = 0.0142 * 10^(-12)
+        
+        // Calculate sqrtPriceX96 properly
+        uint256 price = (1e18 * 1e6) / targetPrice; // WTI/USDC price in Q128.128
+        uint256 sqrtPriceX96Raw = sqrt((price << 96) * 1e6) << 48;
+        uint160 sqrtPriceX96 = uint160(sqrtPriceX96Raw / 1e12);
         
         // Initialize pool with calculated sqrtPriceX96
         pool.initialize(sqrtPriceX96);
@@ -114,21 +125,24 @@ contract WTITest is Test {
         // Get current price from pool
         (uint160 currentSqrtPriceX96,,,,,,) = pool.slot0();
         
-        // Calculate and verify price
-        // Price = (1/p) * 10^(decimals1 - decimals0)
+        // Calculate and verify price using the formula from the docs
+        // Price = (1 / (sqrtPrice^2 / 2^192)) * 10^(decimals1 - decimals0)
         // where decimals1 = 18 (WTI) and decimals0 = 6 (USDC)
-        uint256 price = (1e12 * (1 << 192)) / (uint256(currentSqrtPriceX96) * uint256(currentSqrtPriceX96));
+        uint256 base = 1 << 192; // 2^192
+        uint256 denominator = uint256(currentSqrtPriceX96) * uint256(currentSqrtPriceX96);
+        uint256 price_adjusted = (base * 1e6) / denominator;
         
-        // Adjust price for decimals (divide by 1e12 since we multiplied by 1e12 above)
-        uint256 adjustedPrice = price / 1e12;
+        // Convert to USDC decimals for comparison
+        uint256 scaledPrice = price_adjusted * 1e6 / 1e12;
         
         // Log results
         console2.log("Pool address:", poolAddress);
-        console2.log("WTI/USDC Price:", price);
-        console2.log("WTI/USDC adjustedPrice:", adjustedPrice);
+        console2.log("WTI/USDC Price (raw):", price_adjusted);
+        console2.log("WTI/USDC Price (adjusted):", price_adjusted / 1e12);
+        console2.log("WTI/USDC Price (scaled 6 decimals):", scaledPrice);
         
-        // Verify price is close to 70 (allowing for some rounding error)
-        assertApproxEqAbs(adjustedPrice, 70, 1);
+        // Verify price is close to 70.415 (allowing for some rounding error)
+        assertApproxEqAbs(scaledPrice, 70415000, 1000); // Allow for 0.001 USDC deviation
     }
 
     // Helper function to calculate square root
