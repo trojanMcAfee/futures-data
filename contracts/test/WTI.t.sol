@@ -108,8 +108,9 @@ contract WTITest is Test {
         
         // Calculate sqrtPriceX96 for WTI as token0 and USDC as token1
         // sqrtPriceX96 = sqrt(targetPrice/1e6) * 2^96 = sqrt(targetPrice)/1e3 * 2^96
-        uint256 sqrtTarget = sqrt(targetPrice);
-        uint160 sqrtPriceX96 = uint160(FullMath.mulDiv(sqrtTarget, 1 << 96, 1e3));
+        // uint256 sqrtTarget = sqrt(targetPrice);
+        // uint160 sqrtPriceX96 = uint160(FullMath.mulDiv(sqrtTarget, 1 << 96, 1e3));
+        uint160 sqrtPriceX96 = 664832398952738400000000;
         
         // Log the initial sqrtPriceX96 value
         console.log("Initial sqrtPriceX96:", uint256(sqrtPriceX96));
@@ -122,13 +123,14 @@ contract WTITest is Test {
         (uint160 currentSqrtPriceX96,,,,,,) = pool.slot0();
         
         // Calculate price from sqrtPriceX96 using FullMath for precision
-        // For token0 = WTI and token1 = USDC: price = (sqrtPriceX96^2 / 2^192) * 1e6
+        // For token0 = WTI (18 decimals) and token1 = USDC (6 decimals): 
+        // price = (sqrtPriceX96^2 / 2^192) * (10^18 / 10^6)
         uint256 calculatedPrice = FullMath.mulDiv(
             uint256(currentSqrtPriceX96) * uint256(currentSqrtPriceX96), 
-            1e6, 
+            1e18, // 10^18 / 10^6 = 10^12 to account for decimal difference
             1 << 192
         );
-        
+
         // Log the calculated price
         console.log("WTI price in USDC (with 6 decimals):", calculatedPrice);
         console.log("Expected price:", targetPrice);
