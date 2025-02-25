@@ -181,11 +181,7 @@ contract WTITest is Test {
     function _calculateLiquidityAmounts(IUniswapV3Pool pool) private view returns (uint256 usdcAmount, uint256 wtiAmount) {
         // Get the current price to calculate the WTI/USDC ratio
         (uint160 currentSqrtPriceX96,,,,,,) = pool.slot0();
-        uint256 wtiPrice = FullMath.mulDiv(
-            uint256(currentSqrtPriceX96) * uint256(currentSqrtPriceX96), 
-            1e6, 
-            1 << 192
-        );
+        uint256 wtiPrice = _calculateWTIprice(currentSqrtPriceX96);
         console.log("Current WTI price in USDC (with 6 decimals):", wtiPrice);
         
         // Define the USDC amount to add as liquidity
@@ -349,14 +345,10 @@ contract WTITest is Test {
         (uint160 updatedSqrtPriceX96,,,,,,) = pool.slot0();
         
         // Calculate the updated price
-        uint256 updatedPrice = FullMath.mulDiv(
-            uint256(updatedSqrtPriceX96) * uint256(updatedSqrtPriceX96), 
-            1e6, 
-            1 << 192
-        );
+        uint256 updatedPrice = _calculateWTIprice(updatedSqrtPriceX96);
         
         console.log("Updated sqrtPriceX96:", uint256(updatedSqrtPriceX96));
-        console.log("Updated WTI price in USDC:", updatedPrice / 1e6, "USDC");
+        console.log("Updated WTI price in USDC:", updatedPrice, "USDC (6 decimals)");
         
         // Get token balances in the pool
         uint256 wtiBalance = IERC20(address(wti)).balanceOf(poolAddress);
