@@ -169,8 +169,7 @@ contract WTITest is Test {
         helpers.fundLiquidityProvider(liquidityProvider, usdcAmount, wtiAmount);
         
         // Add liquidity to the pool
-        (uint256 tokenId, uint128 liquidity, uint256 amount0, uint256 amount1) = 
-            helpers.addLiquidityToPool(liquidityProvider, usdcAmount, wtiAmount);
+        helpers.addLiquidityToPool(liquidityProvider, usdcAmount, wtiAmount);
         
         // Log the results
         helpers.logPoolState(poolAddress, pool);

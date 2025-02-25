@@ -128,7 +128,7 @@ contract Helpers is Test {
             amount0 = _amount0;
             amount1 = _amount1;
             
-            logAddLiquidityResults(tokenId, amount0, amount1);
+            logAddLiquidityResults(amount0, amount1);
         } catch Error(string memory reason) {
             console.log("Failed to add liquidity with reason:", reason);
             revert(reason);
@@ -180,13 +180,11 @@ contract Helpers is Test {
     
     // Helper function to log the results of adding liquidity
     function logAddLiquidityResults(
-        uint256 tokenId,
         uint256 amount0,
         uint256 amount1
     ) public view {
         // Get pool token information
-        address poolAddress = factory.getPool(address(wti), USDC, fee);
-        IUniswapV3Pool pool = IUniswapV3Pool(poolAddress);
+        factory.getPool(address(wti), USDC, fee);
                 
         // WTI is always token0, USDC is always token1 in our setup
         console.log("Amount of WTI used (token0):", amount0 / 1e18, "WTI");

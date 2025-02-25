@@ -132,10 +132,6 @@ contract WTILiquidityProvider {
         // Mint the position
         (tokenId, liquidity, amount0, amount1) = nonfungiblePositionManager.mint(params);
         
-        // Debug logging for amounts after minting
-        console.log("After mint - WTI used (amount0):", amount0 / 1e18);
-        console.log("After mint - USDC used (amount1):", amount1 / 1e6);
-        
         // Save position information
         positions[tokenId] = Position({
             owner: msg.sender,
