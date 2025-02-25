@@ -28,7 +28,7 @@ contract WTITest is Test {
     address USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
     uint24 fee = 500;
     
-    
+
     function setUp() public {
         // Create a new account for the deployer
         uint256 deployerPrivateKey = uint256(keccak256(abi.encodePacked(block.timestamp, "WTI_DEPLOYER")));
@@ -86,15 +86,6 @@ contract WTITest is Test {
         // Fork Ethereum mainnet at a recent block
         vm.createSelectFork(vm.envString("MAINNET_RPC_URL"));
         
-        // Import required interfaces
-        IUniswapV3Factory factory = IUniswapV3Factory(0x1F98431c8aD98523631AE4a59f267346ea31F984);
-        
-        // USDC address on Ethereum mainnet
-        address USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
-        
-        // Create pool with 0.05% fee
-        uint24 fee = 500;
-        
         // Deploy WTI token again on the forked network
         vm.startPrank(deployer);
         wti = new WTI();
@@ -150,17 +141,39 @@ contract WTITest is Test {
         // First create the pool
         test_CreateUniswapV3Pool();
         
+        // Get the pool address and prepare for adding liquidity
+        (address poolAddress, IUniswapV3Pool pool, address liquidityProvider) = _setupForLiquidity();
+        
+        // Calculate token amounts for 50/50 split
+        (uint256 usdcAmount, uint256 wtiAmount) = _calculateLiquidityAmounts(pool);
+        
+        // Fund the liquidity provider with tokens
+        _fundLiquidityProvider(liquidityProvider, usdcAmount, wtiAmount);
+        
+        // Add liquidity to the pool
+        (uint256 tokenId, uint128 liquidity, uint256 amount0, uint256 amount1) = 
+            _addLiquidityToPool(liquidityProvider, usdcAmount, wtiAmount);
+        
+        // Log the results
+        _logPoolState(poolAddress, pool, tokenId, liquidity, amount0, amount1);
+    }
+    
+    function _setupForLiquidity() private returns (address poolAddress, IUniswapV3Pool pool, address liquidityProvider) {
         // Get the pool address
-        address poolAddress = factory.getPool(address(wti), USDC, fee);
-        IUniswapV3Pool pool = IUniswapV3Pool(poolAddress);
+        poolAddress = factory.getPool(address(wti), USDC, fee);
+        pool = IUniswapV3Pool(poolAddress);
         
         // Create a new address for the liquidity provider
         uint256 liquidityProviderPrivateKey = uint256(keccak256(abi.encodePacked(block.timestamp, "LIQUIDITY_PROVIDER")));
-        address liquidityProvider = vm.addr(liquidityProviderPrivateKey);
+        liquidityProvider = vm.addr(liquidityProviderPrivateKey);
         
         // Fund the liquidity provider with ETH
         vm.deal(liquidityProvider, 1 ether);
         
+        return (poolAddress, pool, liquidityProvider);
+    }
+    
+    function _calculateLiquidityAmounts(IUniswapV3Pool pool) private view returns (uint256 usdcAmount, uint256 wtiAmount) {
         // Get the current price to calculate the WTI/USDC ratio
         (uint160 currentSqrtPriceX96,,,,,,) = pool.slot0();
         uint256 wtiPrice = FullMath.mulDiv(
@@ -171,16 +184,20 @@ contract WTITest is Test {
         console.log("Current WTI price in USDC (with 6 decimals):", wtiPrice);
         
         // Define the USDC amount to add as liquidity
-        uint256 usdcAmount = 30000 * 1e6; // 30,000 USDC with 6 decimals
+        usdcAmount = 30000 * 1e6; // 30,000 USDC with 6 decimals
         
         // Calculate the WTI amount for 50/50 split
         // For a 50/50 split at price p, we need: 
         // value_wti = value_usdc
         // amount_wti * p = amount_usdc
         // amount_wti = amount_usdc / p
-        uint256 wtiAmount = (usdcAmount * 1e18) / wtiPrice; // Converting to 18 decimals
+        wtiAmount = (usdcAmount * 1e18) / wtiPrice; // Converting to 18 decimals
         console.log("WTI amount to add:", wtiAmount / 1e18, "WTI");
         
+        return (usdcAmount, wtiAmount);
+    }
+    
+    function _fundLiquidityProvider(address liquidityProvider, uint256 usdcAmount, uint256 wtiAmount) private {
         // Mint USDC to the liquidity provider
         vm.startPrank(deployer);
         // Deal USDC tokens to the liquidity provider
@@ -189,10 +206,66 @@ contract WTITest is Test {
         // Transfer WTI tokens to the liquidity provider
         wti.transfer(liquidityProvider, wtiAmount);
         vm.stopPrank();
-        
+    }
+    
+    function _addLiquidityToPool(
+        address liquidityProvider, 
+        uint256 usdcAmount, 
+        uint256 wtiAmount
+    ) private returns (
+        uint256 tokenId, 
+        uint128 liquidity, 
+        uint256 amount0, 
+        uint256 amount1
+    ) {
         // Deploy the WTILiquidityProvider contract
         vm.startPrank(liquidityProvider);
         
+        WTILiquidityProvider liquidityProviderContract = _deployAndPrepareContract(
+            liquidityProvider,
+            usdcAmount,
+            wtiAmount
+        );
+        
+        // Get tick range for liquidity
+        (int24 tickLower, int24 tickUpper) = _calculateTickRange();
+        
+        // Call the overloaded addLiquidity function with our custom tick range
+        try liquidityProviderContract.addLiquidity(
+            usdcAmount, 
+            wtiAmount, 
+            tickLower, 
+            tickUpper
+        ) returns (
+            uint256 _tokenId, 
+            uint128 _liquidity, 
+            uint256 _amount0, 
+            uint256 _amount1
+        ) {
+            tokenId = _tokenId;
+            liquidity = _liquidity;
+            amount0 = _amount0;
+            amount1 = _amount1;
+            
+            _logAddLiquidityResults(tokenId, liquidity, amount0, amount1);
+        } catch Error(string memory reason) {
+            console.log("Failed to add liquidity with reason:", reason);
+            revert(reason);
+        } catch (bytes memory lowLevelData) {
+            console.log("Failed to add liquidity with low level error");
+            revert("Low level error");
+        }
+        
+        vm.stopPrank();
+        
+        return (tokenId, liquidity, amount0, amount1);
+    }
+    
+    function _deployAndPrepareContract(
+        address liquidityProvider,
+        uint256 usdcAmount,
+        uint256 wtiAmount
+    ) private returns (WTILiquidityProvider) {
         // Create the liquidity provider contract
         WTILiquidityProvider liquidityProviderContract = new WTILiquidityProvider(
             INonfungiblePositionManager(nonFungiblePositionManager),
@@ -205,17 +278,53 @@ contract WTITest is Test {
         wti.approve(address(liquidityProviderContract), wtiAmount);
         IERC20(USDC).approve(address(liquidityProviderContract), usdcAmount);
         
-        // Add liquidity
-        (uint256 tokenId, uint128 liquidity, uint256 amount0, uint256 amount1) = 
-            liquidityProviderContract.addLiquidity(usdcAmount, wtiAmount);
+        // Print debug info
+        console.log("WTI token address:", address(wti));
+        console.log("USDC token address:", USDC);
+        console.log("WTI balance of provider:", wti.balanceOf(liquidityProvider) / 1e18);
+        console.log("USDC balance of provider:", IERC20(USDC).balanceOf(liquidityProvider) / 1e6);
         
+        return liquidityProviderContract;
+    }
+    
+    function _calculateTickRange() private view returns (int24 tickLower, int24 tickUpper) {
+        // Get the current price to calculate a reasonable price range
+        address poolAddress = factory.getPool(address(wti), USDC, fee);
+        IUniswapV3Pool pool = IUniswapV3Pool(poolAddress);
+        (uint160 sqrtPriceX96, int24 currentTick,,,,,) = pool.slot0();
+        
+        // Use a +/- 10% price range instead of full range
+        int24 tickSpacing = 10; // 10 is the tick spacing for 0.05% fee tier
+        tickLower = ((currentTick - int24(4223)) / tickSpacing) * tickSpacing; // ~10% below current price
+        tickUpper = ((currentTick + int24(4223)) / tickSpacing) * tickSpacing; // ~10% above current price
+        
+        console.log("Current tick:", currentTick);
+        // console.log("Using tick range:", tickLower, "to", tickUpper);
+        
+        return (tickLower, tickUpper);
+    }
+    
+    // Helper function to log the results of adding liquidity
+    function _logAddLiquidityResults(
+        uint256 tokenId,
+        uint128 liquidity,
+        uint256 amount0,
+        uint256 amount1
+    ) private pure {
         console.log("Added liquidity with token ID:", tokenId);
         console.log("Liquidity amount:", uint256(liquidity));
         console.log("Amount of WTI used:", amount0 / 1e18, "WTI");
         console.log("Amount of USDC used:", amount1 / 1e6, "USDC");
-        
-        vm.stopPrank();
-        
+    }
+    
+    function _logPoolState(
+        address poolAddress, 
+        IUniswapV3Pool pool, 
+        uint256 tokenId, 
+        uint128 liquidity, 
+        uint256 amount0, 
+        uint256 amount1
+    ) private view {
         // Get the pool's current state
         (uint160 updatedSqrtPriceX96,,,,,,) = pool.slot0();
         
@@ -229,12 +338,12 @@ contract WTITest is Test {
         console.log("Updated sqrtPriceX96:", uint256(updatedSqrtPriceX96));
         console.log("Updated WTI price in USDC:", updatedPrice / 1e6, "USDC");
         
-        // Get the amount of tokens in the pool
-        uint256 wtiInPool = IERC20(address(wti)).balanceOf(poolAddress);
-        uint256 usdcInPool = IERC20(USDC).balanceOf(poolAddress);
+        // Get token balances in the pool
+        uint256 wtiBalance = IERC20(address(wti)).balanceOf(poolAddress);
+        uint256 usdcBalance = IERC20(USDC).balanceOf(poolAddress);
         
-        console.log("WTI in pool:", wtiInPool / 1e18, "WTI");
-        console.log("USDC in pool:", usdcInPool / 1e6, "USDC");
+        console.log("WTI in pool:", wtiBalance / 1e18, "WTI");
+        console.log("USDC in pool:", usdcBalance / 1e6, "USDC");
     }
 
     //--------------------------------

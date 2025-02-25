@@ -78,6 +78,31 @@ contract WTILiquidityProvider {
         uint256 amount0,
         uint256 amount1
     ) {
+        return addLiquidity(amountUSDC, amountWTI, TickMath.MIN_TICK, TickMath.MAX_TICK);
+    }
+    
+    /**
+     * @dev Add liquidity to the WTI/USDC pool with custom tick range
+     * @param amountUSDC Amount of USDC to add as liquidity
+     * @param amountWTI Amount of WTI to add as liquidity
+     * @param tickLower Lower tick bound
+     * @param tickUpper Upper tick bound
+     * @return tokenId The NFT position token ID
+     * @return liquidity The amount of liquidity added
+     * @return amount0 The amount of token0 used
+     * @return amount1 The amount of token1 used
+     */
+    function addLiquidity(
+        uint256 amountUSDC,
+        uint256 amountWTI,
+        int24 tickLower,
+        int24 tickUpper
+    ) public returns (
+        uint256 tokenId,
+        uint128 liquidity,
+        uint256 amount0,
+        uint256 amount1
+    ) {
         // Transfer tokens to this contract
         TransferHelper.safeTransferFrom(wtiToken, msg.sender, address(this), amountWTI);
         TransferHelper.safeTransferFrom(usdcToken, msg.sender, address(this), amountUSDC);
@@ -86,38 +111,51 @@ contract WTILiquidityProvider {
         TransferHelper.safeApprove(wtiToken, address(nonfungiblePositionManager), amountWTI);
         TransferHelper.safeApprove(usdcToken, address(nonfungiblePositionManager), amountUSDC);
         
-        // Create mint parameters
-        INonfungiblePositionManager.MintParams memory params = INonfungiblePositionManager.MintParams({
-            token0: wtiToken,
-            token1: usdcToken,
-            fee: poolFee,
-            // Full range liquidity
-            tickLower: TickMath.MIN_TICK,
-            tickUpper: TickMath.MAX_TICK,
-            amount0Desired: amountWTI,
-            amount1Desired: amountUSDC,
-            amount0Min: 0,
-            amount1Min: 0,
-            recipient: address(this),
-            deadline: block.timestamp
-        });
-        
+        // Create the parameters for minting a position
+        INonfungiblePositionManager.MintParams memory params =
+            INonfungiblePositionManager.MintParams({
+                token0: wtiToken,
+                token1: usdcToken,
+                fee: poolFee,
+                tickLower: tickLower,
+                tickUpper: tickUpper,
+                amount0Desired: amountWTI,
+                amount1Desired: amountUSDC,
+                amount0Min: 0, // Accept any amount
+                amount1Min: 0, // Accept any amount
+                recipient: address(this),
+                deadline: block.timestamp + 15 minutes
+            });
+
         // Mint the position
         (tokenId, liquidity, amount0, amount1) = nonfungiblePositionManager.mint(params);
         
         // Save position information
-        _savePosition(tokenId, msg.sender);
+        positions[tokenId] = Position({
+            owner: msg.sender,
+            liquidity: liquidity,
+            token0: wtiToken,
+            token1: usdcToken
+        });
+        
+        // Update the last position ID
         lastPositionId = tokenId;
         
-        // Refund any unused tokens
-        if (amount0 < amountWTI) {
-            TransferHelper.safeApprove(wtiToken, address(nonfungiblePositionManager), 0);
-            TransferHelper.safeTransfer(wtiToken, msg.sender, amountWTI - amount0);
+        // Refund any leftover tokens to msg.sender
+        if (amountWTI > amount0) {
+            TransferHelper.safeTransfer(
+                wtiToken,
+                msg.sender,
+                amountWTI - amount0
+            );
         }
         
-        if (amount1 < amountUSDC) {
-            TransferHelper.safeApprove(usdcToken, address(nonfungiblePositionManager), 0);
-            TransferHelper.safeTransfer(usdcToken, msg.sender, amountUSDC - amount1);
+        if (amountUSDC > amount1) {
+            TransferHelper.safeTransfer(
+                usdcToken,
+                msg.sender,
+                amountUSDC - amount1
+            );
         }
         
         return (tokenId, liquidity, amount0, amount1);
