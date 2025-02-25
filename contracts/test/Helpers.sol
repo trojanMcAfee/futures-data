@@ -65,7 +65,6 @@ contract Helpers is Test {
         // Get the current price to calculate the WTI/USDC ratio
         (uint160 currentSqrtPriceX96,,,,,,) = pool.slot0();
         uint256 wtiPrice = calculateWTIprice(currentSqrtPriceX96);
-        console.log("Current WTI price in USDC (with 6 decimals):", wtiPrice);
         
         // Define the USDC amount to add as liquidity
         usdcAmount = 30000 * 1e6; // 30,000 USDC with 6 decimals
@@ -76,7 +75,6 @@ contract Helpers is Test {
         // amount_wti * p = amount_usdc
         // amount_wti = amount_usdc / p
         wtiAmount = (usdcAmount * 1e18) / wtiPrice; // Converting to 18 decimals
-        console.log("WTI amount to add:", wtiAmount / 1e18, "WTI");
         
         return (usdcAmount, wtiAmount);
     }
@@ -106,7 +104,6 @@ contract Helpers is Test {
         vm.startPrank(liquidityProvider);
         
         WTILiquidityProvider liquidityProviderContract = deployAndPrepareContract(
-            liquidityProvider,
             usdcAmount,
             wtiAmount
         );
@@ -131,11 +128,11 @@ contract Helpers is Test {
             amount0 = _amount0;
             amount1 = _amount1;
             
-            logAddLiquidityResults(tokenId, liquidity, amount0, amount1);
+            logAddLiquidityResults(tokenId, amount0, amount1);
         } catch Error(string memory reason) {
             console.log("Failed to add liquidity with reason:", reason);
             revert(reason);
-        } catch (bytes memory lowLevelData) {
+        } catch {
             console.log("Failed to add liquidity with low level error");
             revert("Low level error");
         }
@@ -146,7 +143,6 @@ contract Helpers is Test {
     }
     
     function deployAndPrepareContract(
-        address liquidityProvider,
         uint256 usdcAmount,
         uint256 wtiAmount
     ) public returns (WTILiquidityProvider) {
@@ -169,7 +165,7 @@ contract Helpers is Test {
         // Get the current price to calculate a reasonable price range
         address poolAddress = factory.getPool(address(wti), USDC, fee);
         IUniswapV3Pool pool = IUniswapV3Pool(poolAddress);
-        (uint160 sqrtPriceX96, int24 currentTick,,,,,) = pool.slot0();
+        (, int24 currentTick,,,,,) = pool.slot0();
         
         // Instead of using a fixed range, let's make sure we're centered around the current tick
         int24 tickSpacing = pool.tickSpacing();
@@ -185,16 +181,13 @@ contract Helpers is Test {
     // Helper function to log the results of adding liquidity
     function logAddLiquidityResults(
         uint256 tokenId,
-        uint128 liquidity,
         uint256 amount0,
         uint256 amount1
     ) public view {
         // Get pool token information
         address poolAddress = factory.getPool(address(wti), USDC, fee);
         IUniswapV3Pool pool = IUniswapV3Pool(poolAddress);
-        
-        console.log("Added liquidity with token ID:", tokenId);
-        
+                
         // WTI is always token0, USDC is always token1 in our setup
         console.log("Amount of WTI used (token0):", amount0 / 1e18, "WTI");
         console.log("Amount of USDC used (token1):", amount1 / 1e6, "USDC");
@@ -202,11 +195,7 @@ contract Helpers is Test {
     
     function logPoolState(
         address poolAddress, 
-        IUniswapV3Pool pool, 
-        uint256 tokenId, 
-        uint128 liquidity, 
-        uint256 amount0, 
-        uint256 amount1
+        IUniswapV3Pool pool
     ) public view {
         // Get the pool's current state
         (uint160 updatedSqrtPriceX96,,,,,,) = pool.slot0();
@@ -214,7 +203,6 @@ contract Helpers is Test {
         // Calculate the updated price
         uint256 updatedPrice = calculateWTIprice(updatedSqrtPriceX96);
         
-        console.log("Updated sqrtPriceX96:", uint256(updatedSqrtPriceX96));
         console.log("Updated WTI price in USDC:", updatedPrice, "USDC (6 decimals)");
         
         // Get token balances in the pool

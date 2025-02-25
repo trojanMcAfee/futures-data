@@ -150,7 +150,6 @@ contract WTITest is Test {
 
         // Log the calculated price
         console.log("WTI price in USDC (with 6 decimals):", calculatedPrice);
-        console.log("Expected price:", targetPrice);
         
         // Verify the price is within an acceptable range
         assertApproxEqAbs(calculatedPrice, targetPrice, targetPrice / 100); // Allow 1% deviation
@@ -174,6 +173,6 @@ contract WTITest is Test {
             helpers.addLiquidityToPool(liquidityProvider, usdcAmount, wtiAmount);
         
         // Log the results
-        helpers.logPoolState(poolAddress, pool, tokenId, liquidity, amount0, amount1);
+        helpers.logPoolState(poolAddress, pool);
     }
 } 

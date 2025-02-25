@@ -112,17 +112,6 @@ contract WTILiquidityProvider {
         TransferHelper.safeApprove(wtiToken, address(nonfungiblePositionManager), amountWTI);
         TransferHelper.safeApprove(usdcToken, address(nonfungiblePositionManager), amountUSDC);
         
-        // Debug logging
-        console.log("Adding liquidity:");
-        console.log("WTI amount:", amountWTI / 1e18);
-        console.log("USDC amount:", amountUSDC / 1e6);
-        console.log("-----");
-        console.logInt(tickLower);
-        console.log("tickLower ^");
-        console.logInt(tickUpper);
-        console.log("tickUpper ^");
-        console.log("-----");
-        
         // Create the parameters for minting a position
         // WTI is always token0, USDC is always token1 in our setup
         INonfungiblePositionManager.MintParams memory params =
