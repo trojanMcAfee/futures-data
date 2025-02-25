@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 // Import only Test, no console
+import "forge-std/console.sol";
 import {Test} from "forge-std/Test.sol";
 import {WTI} from "../src/WTI.sol";
 import {AggregatorV3Interface} from "../src/interfaces/AggregatorV3Interface.sol";
@@ -59,9 +60,7 @@ contract WTITest is Test {
             uint256 updatedAt,
             uint80 answeredInRound
         ) = priceFeed.latestRoundData();
-        
-        // Get decimals to format the price correctly
-        uint8 decimals = priceFeed.decimals();
+
         
         // Remove console logging
         
@@ -91,49 +90,26 @@ contract WTITest is Test {
         // Ensure WTI has some initial liquidity
         require(wti.balanceOf(deployer) > 0, "No WTI balance");
         
-        // Create pool - note that the order doesn't matter for creation, Uniswap will sort them
+        // Create pool with WTI and USDC
         address poolAddress = factory.createPool(address(wti), USDC, fee);
         IUniswapV3Pool pool = IUniswapV3Pool(poolAddress);
         
-        // Get token ordering
+        // Verify token ordering (WTI is token0, USDC is token1)
         address token0 = pool.token0();
         address token1 = pool.token1();
-        
-        // Store values in variables for debugging later
-        bool isUsdcToken0 = token0 == USDC;
+        assertEq(token0, address(wti), "WTI should be token0");
+        assertEq(token1, USDC, "USDC should be token1");
         
         // Target price: 70.415 USDC per WTI
         uint256 targetPrice = 70415000; // 70.415 * 1e6
         
-        // Calculate sqrtPriceX96 based on token ordering
-        uint160 sqrtPriceX96;
+        // Calculate sqrtPriceX96 for WTI as token0 and USDC as token1
+        // sqrtPriceX96 = sqrt(targetPrice/1e6) * 2^96 = sqrt(targetPrice)/1e3 * 2^96
+        uint256 sqrtTarget = sqrt(targetPrice);
+        uint160 sqrtPriceX96 = uint160(FullMath.mulDiv(sqrtTarget, 1 << 96, 1e3));
         
-        if (isUsdcToken0) {
-            // USDC is token0, WTI is token1
-            // Price = USDC/WTI = 1/70.415
-            // Adjust for decimals: 10^(18-6) = 10^12
-            
-            // Calculate price = 1/70.415 * 10^12
-            uint256 price = FullMath.mulDiv(1e12, 1e6, targetPrice);
-            
-            // Calculate sqrt(price) * 2^96
-            uint256 sqrtPrice = sqrt(price);
-            sqrtPriceX96 = uint160(FullMath.mulDiv(sqrtPrice, 1 << 96, 1e6));
-        } else {
-            // WTI is token0 and USDC is token1.
-            // The pool encodes sqrtPriceX96 = sqrt(USDC per WTI) * 2^96.
-            // Our target price is 70.415 USDC/WTI but targetPrice is 70415000 (with 6 decimals).
-            // Thus, USDC per WTI = targetPrice/1e6. We want:
-            //    (sqrtPriceX96/2^96)^2 = targetPrice/1e6.
-            // Taking square roots, we desire:
-            //    sqrtPriceX96 = sqrt(targetPrice/1e6) * 2^96.
-            // Since targetPrice is scaled by 1e6, we compute:
-            //    sqrt(targetPrice/1e6) = sqrt(targetPrice) / 1e3   (because sqrt(1e6)=1e3).
-            //
-            // Thus, set:
-            uint256 sqrtTarget = sqrt(targetPrice); // e.g., sqrt(70415000) ≈ 8392.
-            sqrtPriceX96 = uint160(FullMath.mulDiv(sqrtTarget, 1 << 96, 1e3));
-        }
+        // Log the initial sqrtPriceX96 value
+        console.log("Initial sqrtPriceX96:", uint256(sqrtPriceX96));
         
         // Initialize the pool with the calculated sqrtPriceX96
         pool.initialize(sqrtPriceX96);
@@ -142,30 +118,17 @@ contract WTITest is Test {
         // Get the current price from the pool
         (uint160 currentSqrtPriceX96,,,,,,) = pool.slot0();
         
-        // Debug info
-        emit log_named_uint("Token0 is USDC", isUsdcToken0 ? 1 : 0);
-        emit log_named_uint("sqrtPriceX96", uint256(currentSqrtPriceX96));
-        emit log_named_address("Token0", token0);
-        emit log_named_address("Token1", token1);
-        
         // Calculate price from sqrtPriceX96 using FullMath for precision
-        uint256 calculatedPrice;
+        // For token0 = WTI and token1 = USDC: price = (sqrtPriceX96^2 / 2^192) * 1e6
+        uint256 calculatedPrice = FullMath.mulDiv(
+            uint256(currentSqrtPriceX96) * uint256(currentSqrtPriceX96), 
+            1e6, 
+            1 << 192
+        );
         
-        if (isUsdcToken0) {
-            // If USDC is token0, price of WTI in USDC = 1/(sqrtPrice^2/2^192) * 10^12
-            uint256 sqrtPriceSq = FullMath.mulDiv(uint256(currentSqrtPriceX96), uint256(currentSqrtPriceX96), 1);
-            uint256 Q192 = 1 << 192;
-            calculatedPrice = FullMath.mulDiv(FullMath.mulDiv(Q192, 1e12, sqrtPriceSq), 1, 1);
-        } else {
-            // For token0 = WTI and token1 = USDC, the pool's encoded price is:
-            //    USDC per WTI = (sqrtPriceX96 / 2^96)^2.
-            // We then scale by 1e6 (USDC decimals) to get calculatedPrice.
-            // So set:
-            calculatedPrice = FullMath.mulDiv(uint256(currentSqrtPriceX96) * uint256(currentSqrtPriceX96), 1e6, 1 << 192);
-        }
-        
-        emit log_named_uint("Calculated price (in USDC decimals)", calculatedPrice);
-        emit log_named_uint("Expected price", targetPrice);
+        // Log the calculated price
+        console.log("WTI price in USDC (with 6 decimals):", calculatedPrice);
+        console.log("Expected price:", targetPrice);
         
         // Verify the price is within an acceptable range
         assertApproxEqAbs(calculatedPrice, targetPrice, targetPrice / 100); // Allow 1% deviation
