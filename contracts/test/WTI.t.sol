@@ -12,10 +12,12 @@ import {FullMath} from "../lib/v3-core/contracts/libraries/FullMath.sol";
 import {IERC20} from "../src/interfaces/IERC20.sol";
 import {INonfungiblePositionManager} from "../src/interfaces/INonfungiblePositionManager.sol";
 import {WTILiquidityProvider} from "../src/WTILiquidityProvider.sol";
+import {Helpers} from "./Helpers.sol";
 
 contract WTITest is Test {
     WTI public wti;
     address public deployer;
+    Helpers public helpers;
     
     // WTI/USD Chainlink Data Feed on Arbitrum
     address constant CHAINLINK_WTI_USD = 0x594b919AD828e693B935705c3F816221729E7AE8;
@@ -41,6 +43,16 @@ contract WTITest is Test {
         vm.startPrank(deployer);
         wti = new WTI();
         vm.stopPrank();
+        
+        // Initialize the helpers contract
+        helpers = new Helpers(
+            wti,
+            deployer,
+            USDC,
+            fee,
+            factory,
+            nonFungiblePositionManager
+        );
     }
 
     function test_InitialBalance() public view {
@@ -90,6 +102,16 @@ contract WTITest is Test {
         vm.startPrank(deployer);
         wti = new WTI();
         
+        // Reinitialize helpers with the new WTI instance
+        helpers = new Helpers(
+            wti,
+            deployer,
+            USDC,
+            fee,
+            factory,
+            nonFungiblePositionManager
+        );
+        
         // Ensure WTI has some initial liquidity
         require(wti.balanceOf(deployer) > 0, "No WTI balance");
         
@@ -124,7 +146,7 @@ contract WTITest is Test {
         
         // Calculate price from sqrtPriceX96 using FullMath for precision
         // For token0 = WTI (18 decimals) and token1 = USDC (6 decimals): 
-        uint256 calculatedPrice = _calculateWTIprice(currentSqrtPriceX96);
+        uint256 calculatedPrice = helpers.calculateWTIprice(currentSqrtPriceX96);
 
         // Log the calculated price
         console.log("WTI price in USDC (with 6 decimals):", calculatedPrice);
@@ -134,245 +156,24 @@ contract WTITest is Test {
         assertApproxEqAbs(calculatedPrice, targetPrice, targetPrice / 100); // Allow 1% deviation
     }
 
-    function _calculateWTIprice(uint256 sqrtPriceX96) internal pure returns (uint256) {
-        return FullMath.mulDiv(
-            uint256(sqrtPriceX96) * uint256(sqrtPriceX96), 
-            1e18,
-            1 << 192
-        );
-    }
-
     function test_AddLiquidityToPool() public {
         // First create the pool
         test_CreateUniswapV3Pool();
         
         // Get the pool address and prepare for adding liquidity
-        (address poolAddress, IUniswapV3Pool pool, address liquidityProvider) = _setupForLiquidity();
+        (address poolAddress, IUniswapV3Pool pool, address liquidityProvider) = helpers.setupForLiquidity();
         
         // Calculate token amounts for 50/50 split
-        (uint256 usdcAmount, uint256 wtiAmount) = _calculateLiquidityAmounts(pool);
+        (uint256 usdcAmount, uint256 wtiAmount) = helpers.calculateLiquidityAmounts(pool);
         
         // Fund the liquidity provider with tokens
-        _fundLiquidityProvider(liquidityProvider, usdcAmount, wtiAmount);
+        helpers.fundLiquidityProvider(liquidityProvider, usdcAmount, wtiAmount);
         
         // Add liquidity to the pool
         (uint256 tokenId, uint128 liquidity, uint256 amount0, uint256 amount1) = 
-            _addLiquidityToPool(liquidityProvider, usdcAmount, wtiAmount);
+            helpers.addLiquidityToPool(liquidityProvider, usdcAmount, wtiAmount);
         
         // Log the results
-        _logPoolState(poolAddress, pool, tokenId, liquidity, amount0, amount1);
-    }
-    
-    function _setupForLiquidity() private returns (address poolAddress, IUniswapV3Pool pool, address liquidityProvider) {
-        // Get the pool address
-        poolAddress = factory.getPool(address(wti), USDC, fee);
-        pool = IUniswapV3Pool(poolAddress);
-        
-        // Create a new address for the liquidity provider
-        uint256 liquidityProviderPrivateKey = uint256(keccak256(abi.encodePacked(block.timestamp, "LIQUIDITY_PROVIDER")));
-        liquidityProvider = vm.addr(liquidityProviderPrivateKey);
-        
-        // Fund the liquidity provider with ETH
-        vm.deal(liquidityProvider, 1 ether);
-        
-        return (poolAddress, pool, liquidityProvider);
-    }
-    
-    function _calculateLiquidityAmounts(IUniswapV3Pool pool) private view returns (uint256 usdcAmount, uint256 wtiAmount) {
-        // Get the current price to calculate the WTI/USDC ratio
-        (uint160 currentSqrtPriceX96,,,,,,) = pool.slot0();
-        uint256 wtiPrice = _calculateWTIprice(currentSqrtPriceX96);
-        console.log("Current WTI price in USDC (with 6 decimals):", wtiPrice);
-        
-        // Define the USDC amount to add as liquidity
-        usdcAmount = 30000 * 1e6; // 30,000 USDC with 6 decimals
-        
-        // Calculate the WTI amount for 50/50 split
-        // For a 50/50 split at price p, we need: 
-        // value_wti = value_usdc
-        // amount_wti * p = amount_usdc
-        // amount_wti = amount_usdc / p
-        wtiAmount = (usdcAmount * 1e18) / wtiPrice; // Converting to 18 decimals
-        console.log("WTI amount to add:", wtiAmount / 1e18, "WTI");
-        
-        return (usdcAmount, wtiAmount);
-    }
-    
-    function _fundLiquidityProvider(address liquidityProvider, uint256 usdcAmount, uint256 wtiAmount) private {
-        // Mint USDC to the liquidity provider
-        vm.startPrank(deployer);
-        // Deal USDC tokens to the liquidity provider
-        deal(USDC, liquidityProvider, usdcAmount);
-        
-        // Transfer WTI tokens to the liquidity provider
-        wti.transfer(liquidityProvider, wtiAmount);
-        vm.stopPrank();
-    }
-    
-    function _addLiquidityToPool(
-        address liquidityProvider, 
-        uint256 usdcAmount, 
-        uint256 wtiAmount
-    ) private returns (
-        uint256 tokenId, 
-        uint128 liquidity, 
-        uint256 amount0, 
-        uint256 amount1
-    ) {
-        // Deploy the WTILiquidityProvider contract
-        vm.startPrank(liquidityProvider);
-        
-        WTILiquidityProvider liquidityProviderContract = _deployAndPrepareContract(
-            liquidityProvider,
-            usdcAmount,
-            wtiAmount
-        );
-        
-        // Get tick range for liquidity
-        (int24 tickLower, int24 tickUpper) = _calculateTickRange();
-        
-        // Call the overloaded addLiquidity function with our custom tick range
-        try liquidityProviderContract.addLiquidity(
-            usdcAmount, 
-            wtiAmount, 
-            tickLower, 
-            tickUpper
-        ) returns (
-            uint256 _tokenId, 
-            uint128 _liquidity, 
-            uint256 _amount0, 
-            uint256 _amount1
-        ) {
-            tokenId = _tokenId;
-            liquidity = _liquidity;
-            amount0 = _amount0;
-            amount1 = _amount1;
-            
-            _logAddLiquidityResults(tokenId, liquidity, amount0, amount1);
-        } catch Error(string memory reason) {
-            console.log("Failed to add liquidity with reason:", reason);
-            revert(reason);
-        } catch (bytes memory lowLevelData) {
-            console.log("Failed to add liquidity with low level error");
-            revert("Low level error");
-        }
-        
-        vm.stopPrank();
-        
-        return (tokenId, liquidity, amount0, amount1);
-    }
-    
-    function _deployAndPrepareContract(
-        address liquidityProvider,
-        uint256 usdcAmount,
-        uint256 wtiAmount
-    ) private returns (WTILiquidityProvider) {
-        // Create the liquidity provider contract
-        WTILiquidityProvider liquidityProviderContract = new WTILiquidityProvider(
-            INonfungiblePositionManager(nonFungiblePositionManager),
-            address(wti),
-            USDC,
-            fee
-        );
-        
-        // Approve spending of tokens by the liquidity provider contract
-        wti.approve(address(liquidityProviderContract), wtiAmount);
-        IERC20(USDC).approve(address(liquidityProviderContract), usdcAmount);
-        
-        // Print debug info
-        console.log("WTI token address:", address(wti));
-        console.log("USDC token address:", USDC);
-        console.log("WTI balance of provider:", wti.balanceOf(liquidityProvider) / 1e18);
-        console.log("USDC balance of provider:", IERC20(USDC).balanceOf(liquidityProvider) / 1e6);
-        
-        return liquidityProviderContract;
-    }
-    
-    function _calculateTickRange() private view returns (int24 tickLower, int24 tickUpper) {
-        // Get the current price to calculate a reasonable price range
-        address poolAddress = factory.getPool(address(wti), USDC, fee);
-        IUniswapV3Pool pool = IUniswapV3Pool(poolAddress);
-        (uint160 sqrtPriceX96, int24 currentTick,,,,,) = pool.slot0();
-        
-        // Instead of using a fixed range, let's make sure we're centered around the current tick
-        int24 tickSpacing = pool.tickSpacing();
-        
-        // Calculate a tick range that includes the current price
-        // Make sure the ticks are multiples of the tick spacing
-        tickLower = ((currentTick - int24(100 * tickSpacing)) / tickSpacing) * tickSpacing;
-        tickUpper = ((currentTick + int24(100 * tickSpacing)) / tickSpacing) * tickSpacing;
-        
-        console.log("Current tick:", currentTick);
-        console.log("-----");
-        console.logInt(tickLower);
-        console.log("tickLower ^");
-        console.logInt(tickUpper);
-        console.log("tickUpper ^");
-        console.log("-----");
-        console.log("Tick spacing:", tickSpacing);
-        
-        return (tickLower, tickUpper);
-    }
-    
-    // Helper function to log the results of adding liquidity
-    function _logAddLiquidityResults(
-        uint256 tokenId,
-        uint128 liquidity,
-        uint256 amount0,
-        uint256 amount1
-    ) private view {
-        // Get pool token information
-        address poolAddress = factory.getPool(address(wti), USDC, fee);
-        IUniswapV3Pool pool = IUniswapV3Pool(poolAddress);
-        
-        console.log("Added liquidity with token ID:", tokenId);
-        console.log("Liquidity amount:", uint256(liquidity));
-        
-        // WTI is always token0, USDC is always token1 in our setup
-        console.log("Amount of WTI used (token0):", amount0 / 1e18, "WTI");
-        console.log("Amount of USDC used (token1):", amount1 / 1e6, "USDC");
-    }
-    
-    function _logPoolState(
-        address poolAddress, 
-        IUniswapV3Pool pool, 
-        uint256 tokenId, 
-        uint128 liquidity, 
-        uint256 amount0, 
-        uint256 amount1
-    ) private view {
-        // Get the pool's current state
-        (uint160 updatedSqrtPriceX96,,,,,,) = pool.slot0();
-        
-        // Calculate the updated price
-        uint256 updatedPrice = _calculateWTIprice(updatedSqrtPriceX96);
-        
-        console.log("Updated sqrtPriceX96:", uint256(updatedSqrtPriceX96));
-        console.log("Updated WTI price in USDC:", updatedPrice, "USDC (6 decimals)");
-        
-        // Get token balances in the pool
-        uint256 wtiBalance = IERC20(address(wti)).balanceOf(poolAddress);
-        uint256 usdcBalance = IERC20(USDC).balanceOf(poolAddress);
-        
-        console.log("WTI in pool:", wtiBalance / 1e18, "WTI");
-        console.log("USDC in pool:", usdcBalance / 1e6, "USDC");
-    }
-
-    //--------------------------------
-
-    // Helper function to calculate square root
-    function sqrt(uint256 x) private pure returns (uint256 y) {
-        if (x == 0) return 0;
-        
-        // Using the Babylonian method for square root
-        // Start with x as initial estimate
-        y = x;
-        uint256 z = (y + (x / y)) >> 1;
-        
-        // Keep improving the estimate until we converge
-        while (z < y) {
-            y = z;
-            z = (y + (x / y)) >> 1;
-        }
+        helpers.logPoolState(poolAddress, pool, tokenId, liquidity, amount0, amount1);
     }
 } 
