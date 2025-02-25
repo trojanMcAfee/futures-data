@@ -124,12 +124,7 @@ contract WTITest is Test {
         
         // Calculate price from sqrtPriceX96 using FullMath for precision
         // For token0 = WTI (18 decimals) and token1 = USDC (6 decimals): 
-        // price = (sqrtPriceX96^2 / 2^192) * (10^18 / 10^6)
-        uint256 calculatedPrice = FullMath.mulDiv(
-            uint256(currentSqrtPriceX96) * uint256(currentSqrtPriceX96), 
-            1e18, // 10^18 / 10^6 = 10^12 to account for decimal difference
-            1 << 192
-        );
+        uint256 calculatedPrice = _calculateWTIprice(currentSqrtPriceX96);
 
         // Log the calculated price
         console.log("WTI price in USDC (with 6 decimals):", calculatedPrice);
@@ -137,6 +132,14 @@ contract WTITest is Test {
         
         // Verify the price is within an acceptable range
         assertApproxEqAbs(calculatedPrice, targetPrice, targetPrice / 100); // Allow 1% deviation
+    }
+
+    function _calculateWTIprice(uint256 sqrtPriceX96) internal pure returns (uint256) {
+        return FullMath.mulDiv(
+            uint256(sqrtPriceX96) * uint256(sqrtPriceX96), 
+            1e18,
+            1 << 192
+        );
     }
 
     function test_AddLiquidityToPool() public {
