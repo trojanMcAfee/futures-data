@@ -9,6 +9,7 @@ import {FullMath} from "../lib/v3-core/contracts/libraries/FullMath.sol";
 import {ISwapRouter} from "./interfaces/ISwapRouter.sol";
 import {INonfungiblePositionManager} from "./interfaces/INonfungiblePositionManager.sol";
 import {TransferHelper} from "./utils/TransferHelper.sol";
+import "forge-std/console.sol";
 
 /**
  * @title WTILiquidityProvider
@@ -111,7 +112,19 @@ contract WTILiquidityProvider {
         TransferHelper.safeApprove(wtiToken, address(nonfungiblePositionManager), amountWTI);
         TransferHelper.safeApprove(usdcToken, address(nonfungiblePositionManager), amountUSDC);
         
+        // Debug logging
+        console.log("Adding liquidity:");
+        console.log("WTI amount:", amountWTI / 1e18);
+        console.log("USDC amount:", amountUSDC / 1e6);
+        console.log("-----");
+        console.logInt(tickLower);
+        console.log("tickLower ^");
+        console.logInt(tickUpper);
+        console.log("tickUpper ^");
+        console.log("-----");
+        
         // Create the parameters for minting a position
+        // WTI is always token0, USDC is always token1 in our setup
         INonfungiblePositionManager.MintParams memory params =
             INonfungiblePositionManager.MintParams({
                 token0: wtiToken,
@@ -130,6 +143,10 @@ contract WTILiquidityProvider {
         // Mint the position
         (tokenId, liquidity, amount0, amount1) = nonfungiblePositionManager.mint(params);
         
+        // Debug logging for amounts after minting
+        console.log("After mint - WTI used (amount0):", amount0 / 1e18);
+        console.log("After mint - USDC used (amount1):", amount1 / 1e6);
+        
         // Save position information
         positions[tokenId] = Position({
             owner: msg.sender,
@@ -143,19 +160,13 @@ contract WTILiquidityProvider {
         
         // Refund any leftover tokens to msg.sender
         if (amountWTI > amount0) {
-            TransferHelper.safeTransfer(
-                wtiToken,
-                msg.sender,
-                amountWTI - amount0
-            );
+            uint256 refundAmount = amountWTI - amount0;
+            TransferHelper.safeTransfer(wtiToken, msg.sender, refundAmount);
         }
         
         if (amountUSDC > amount1) {
-            TransferHelper.safeTransfer(
-                usdcToken,
-                msg.sender,
-                amountUSDC - amount1
-            );
+            uint256 refundAmount = amountUSDC - amount1;
+            TransferHelper.safeTransfer(usdcToken, msg.sender, refundAmount);
         }
         
         return (tokenId, liquidity, amount0, amount1);

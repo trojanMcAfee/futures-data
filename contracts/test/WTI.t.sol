@@ -293,13 +293,22 @@ contract WTITest is Test {
         IUniswapV3Pool pool = IUniswapV3Pool(poolAddress);
         (uint160 sqrtPriceX96, int24 currentTick,,,,,) = pool.slot0();
         
-        // Use a +/- 10% price range instead of full range
-        int24 tickSpacing = 10; // 10 is the tick spacing for 0.05% fee tier
-        tickLower = ((currentTick - int24(4223)) / tickSpacing) * tickSpacing; // ~10% below current price
-        tickUpper = ((currentTick + int24(4223)) / tickSpacing) * tickSpacing; // ~10% above current price
+        // Instead of using a fixed range, let's make sure we're centered around the current tick
+        int24 tickSpacing = pool.tickSpacing();
+        
+        // Calculate a tick range that includes the current price
+        // Make sure the ticks are multiples of the tick spacing
+        tickLower = ((currentTick - int24(100 * tickSpacing)) / tickSpacing) * tickSpacing;
+        tickUpper = ((currentTick + int24(100 * tickSpacing)) / tickSpacing) * tickSpacing;
         
         console.log("Current tick:", currentTick);
-        // console.log("Using tick range:", tickLower, "to", tickUpper);
+        console.log("-----");
+        console.logInt(tickLower);
+        console.log("tickLower ^");
+        console.logInt(tickUpper);
+        console.log("tickUpper ^");
+        console.log("-----");
+        console.log("Tick spacing:", tickSpacing);
         
         return (tickLower, tickUpper);
     }
@@ -310,11 +319,17 @@ contract WTITest is Test {
         uint128 liquidity,
         uint256 amount0,
         uint256 amount1
-    ) private pure {
+    ) private view {
+        // Get pool token information
+        address poolAddress = factory.getPool(address(wti), USDC, fee);
+        IUniswapV3Pool pool = IUniswapV3Pool(poolAddress);
+        
         console.log("Added liquidity with token ID:", tokenId);
         console.log("Liquidity amount:", uint256(liquidity));
-        console.log("Amount of WTI used:", amount0 / 1e18, "WTI");
-        console.log("Amount of USDC used:", amount1 / 1e6, "USDC");
+        
+        // WTI is always token0, USDC is always token1 in our setup
+        console.log("Amount of WTI used (token0):", amount0 / 1e18, "WTI");
+        console.log("Amount of USDC used (token1):", amount1 / 1e6, "USDC");
     }
     
     function _logPoolState(

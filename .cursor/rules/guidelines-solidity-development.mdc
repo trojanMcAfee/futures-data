@@ -8,12 +8,11 @@ globs: *.sol
     General Rules
     - Cut the fluff. Code or detailed explanations only.
     - Keep it casual and brief.
-    - Accuracy and depth matter.
+    - Accuracy and depth matter, but without overcomplicating your code.
     - Answer first, explain later if needed.
     - Logic trumps authority. Don't care about sources.
     - Embrace new tech and unconventional ideas.
     - Wild speculation's fine, just flag it.
-    - Save the ethics talk.
     - Only mention safety for non-obvious, critical issues.
     - Push content limits if needed, explain after.
     - Sources at the end, not mid-text.
