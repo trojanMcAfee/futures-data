@@ -93,6 +93,10 @@ contract WTITest is Test {
     }
 
     function test_CreateUniswapV3Pool() public {
+        console.log('');
+        console.log('--- CREATE POOL ---');
+        console.log('');
+
         // Fork Ethereum mainnet at a recent block
         vm.createSelectFork(vm.envString("MAINNET_RPC_URL"));
         
@@ -146,12 +150,13 @@ contract WTITest is Test {
         
         // Verify the price is within an acceptable range
         assertApproxEqAbs(calculatedPrice, targetPrice, targetPrice / 100); // Allow 1% deviation
-
-        console.log('--------------------------------');
-        console.log('--------------------------------');
     }
 
     function test_AddLiquidityToPool() public {
+        console.log('');
+        console.log('--- ADD LIQUIDITY ---');
+        console.log('');
+
         // First create the pool
         test_CreateUniswapV3Pool();
         
@@ -169,12 +174,13 @@ contract WTITest is Test {
         
         // Log the results
         helpers.logPoolState(poolAddress, pool);
-
-        console.log('--------------------------------');
-        console.log('--------------------------------');
     }
     
     function test_SwapWTIForUSDC() public {
+        console.log('');
+        console.log('--- START SWAP OPERATION ---');
+        console.log('');
+
         // First add liquidity to the pool
         test_AddLiquidityToPool();
         
@@ -190,8 +196,13 @@ contract WTITest is Test {
         helpers.logTokenBalances(deployer);
         
         // Log the pool state before the swap
+        console.log('');
         console.log("Pool state before swap:");
         helpers.logPoolState(poolAddress, pool);
+
+        console.log('');
+        console.log('--- SWAP ---');
+        console.log('');
         
         // Execute the swap
         vm.startPrank(deployer);
@@ -201,13 +212,13 @@ contract WTITest is Test {
         vm.stopPrank();
         
         // Log the amount of USDC received
-        console.log("USDC received from swap:", amountOut / 1e6, "USDC");
+        console.log("USDC received from swap:", amountOut, "USDC (6 decimals)");
         
         // Log the new sqrtPriceX96 value and price
         (uint160 newSqrtPriceX96,,,,,,) = pool.slot0();
         uint256 newPrice = helpers.calculateWTIprice(newSqrtPriceX96);
         console.log("New sqrtPriceX96:", uint256(newSqrtPriceX96));
-        console.log("New WTI price in USDC:", newPrice, "USDC");
+        console.log("New WTI price in USDC:", newPrice, "USDC (6 decimals)");
         
         // Log the pool state after the swap
         console.log('');
@@ -215,10 +226,8 @@ contract WTITest is Test {
         helpers.logPoolState(poolAddress, pool);
         
         // Log the deployer's token balances after the swap
+        console.log('');
         console.log("Deployer token balances after swap:");
         helpers.logTokenBalances(deployer);
-        
-        console.log('--------------------------------');
-        console.log('--------------------------------');
     }
 } 

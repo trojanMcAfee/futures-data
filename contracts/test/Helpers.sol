@@ -198,9 +198,6 @@ contract Helpers is Test {
     ) public view {
         // Get the pool's current state
         (uint160 updatedSqrtPriceX96,,,,,,) = pool.slot0();
-        
-        // Calculate the updated price
-        uint256 updatedPrice = calculateWTIprice(updatedSqrtPriceX96);
                 
         // Get token balances in the pool
         uint256 wtiBalance = IERC20(address(wti)).balanceOf(poolAddress);
