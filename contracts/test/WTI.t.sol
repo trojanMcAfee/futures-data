@@ -173,4 +173,52 @@ contract WTITest is Test {
         console.log('--------------------------------');
         console.log('--------------------------------');
     }
+    
+    function test_SwapWTIForUSDC() public {
+        // First add liquidity to the pool
+        test_AddLiquidityToPool();
+        
+        // Get the pool address and pool instance
+        address poolAddress = factory.getPool(address(wti), USDC, fee);
+        IUniswapV3Pool pool = IUniswapV3Pool(poolAddress);
+        
+        // Amount of WTI to swap (10 WTI)
+        uint256 amountIn = 10 * 10**wti.decimals();
+        
+        // Log the deployer's token balances before the swap
+        console.log("Deployer token balances before swap:");
+        helpers.logTokenBalances(deployer);
+        
+        // Log the pool state before the swap
+        console.log("Pool state before swap:");
+        helpers.logPoolState(poolAddress, pool);
+        
+        // Execute the swap
+        vm.startPrank(deployer);
+        // Deal some USDC to the deployer for testing
+        deal(USDC, deployer, 1000 * 1e6); // 1000 USDC
+        uint256 amountOut = helpers.swapWTIForUSDC(deployer, amountIn);
+        vm.stopPrank();
+        
+        // Log the amount of USDC received
+        console.log("USDC received from swap:", amountOut / 1e6, "USDC");
+        
+        // Log the new sqrtPriceX96 value and price
+        (uint160 newSqrtPriceX96,,,,,,) = pool.slot0();
+        uint256 newPrice = helpers.calculateWTIprice(newSqrtPriceX96);
+        console.log("New sqrtPriceX96:", uint256(newSqrtPriceX96));
+        console.log("New WTI price in USDC:", newPrice, "USDC");
+        
+        // Log the pool state after the swap
+        console.log('');
+        console.log("Pool state after swap:");
+        helpers.logPoolState(poolAddress, pool);
+        
+        // Log the deployer's token balances after the swap
+        console.log("Deployer token balances after swap:");
+        helpers.logTokenBalances(deployer);
+        
+        console.log('--------------------------------');
+        console.log('--------------------------------');
+    }
 } 

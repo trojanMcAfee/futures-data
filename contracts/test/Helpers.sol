@@ -11,6 +11,7 @@ import {FullMath} from "../lib/v3-core/contracts/libraries/FullMath.sol";
 import {IERC20} from "../src/interfaces/IERC20.sol";
 import {INonfungiblePositionManager} from "../src/interfaces/INonfungiblePositionManager.sol";
 import {WTILiquidityProvider} from "../src/WTILiquidityProvider.sol";
+import {ISwapRouter} from "../src/interfaces/ISwapRouter.sol";
 
 contract Helpers is Test {
     // These variables need to be accessible by the helper functions
@@ -207,6 +208,65 @@ contract Helpers is Test {
         
         console.log("WTI in pool:", wtiBalance / 1e18, "WTI");
         console.log("USDC in pool:", usdcBalance / 1e6, "USDC");
+    }
+
+    /**
+     * @dev Swap WTI tokens for USDC using Uniswap V3 SwapRouter
+     * @param trader Address of the trader performing the swap
+     * @param amountIn Amount of WTI tokens to swap
+     * @return amountOut Amount of USDC tokens received
+     */
+    function swapWTIForUSDC(
+        address trader,
+        uint256 amountIn
+    ) public returns (uint256 amountOut) {
+        // Uniswap V3 SwapRouter address on Ethereum mainnet
+        address swapRouter = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
+        
+        // Start transaction as the trader
+        vm.startPrank(trader);
+        
+        // Approve the router to spend WTI tokens
+        wti.approve(swapRouter, amountIn);
+        
+        // Create the parameters for the swap
+        ISwapRouter.ExactInputSingleParams memory params = ISwapRouter.ExactInputSingleParams({
+            tokenIn: address(wti),
+            tokenOut: USDC,
+            fee: fee,
+            recipient: trader,
+            deadline: block.timestamp + 15 minutes,
+            amountIn: amountIn,
+            amountOutMinimum: 0, // No slippage protection for testing
+            sqrtPriceLimitX96: 0 // No price limit
+        });
+        
+        // Execute the swap
+        try ISwapRouter(swapRouter).exactInputSingle(params) returns (uint256 _amountOut) {
+            amountOut = _amountOut;
+        } catch Error(string memory reason) {
+            console.log("Failed to swap with reason:", reason);
+            revert(reason);
+        } catch {
+            console.log("Failed to swap with low level error");
+            revert("Low level error");
+        }
+        
+        vm.stopPrank();
+        
+        return amountOut;
+    }
+    
+    /**
+     * @dev Log the WTI and USDC balances of an address
+     * @param account Address to check balances for
+     */
+    function logTokenBalances(address account) public view {
+        uint256 wtiBalance = wti.balanceOf(account);
+        uint256 usdcBalance = IERC20(USDC).balanceOf(account);
+        
+        console.log("WTI balance:", wtiBalance / 1e18, "WTI");
+        console.log("USDC balance:", usdcBalance / 1e6, "USDC");
     }
 
     // Helper function to calculate square root
