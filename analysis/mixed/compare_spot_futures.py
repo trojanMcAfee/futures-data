@@ -1,3 +1,21 @@
+"""
+Spot vs Futures Oil Price Comparison
+
+This script analyzes and visualizes the relationship between spot oil prices and 
+futures oil prices. It loads data from both spot_oil_prices.json and futures_oil_prices.json,
+processes the data, and creates comparative visualizations.
+
+Key features:
+- Loads and processes both spot and futures price data
+- Creates side-by-side visualizations of price movements over time
+- Shows daily percentage changes for both price types
+- Calculates and displays summary statistics (average, min, max, volatility)
+- Saves high-quality comparison charts for reporting purposes
+
+This analysis helps understand the relationship between spot and futures markets,
+including contango/backwardation situations and relative volatility patterns.
+"""
+
 import json
 from datetime import datetime
 import pandas as pd

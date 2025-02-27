@@ -1,3 +1,20 @@
+"""
+Spot Oil Analysis Logic
+
+This module provides utility functions for processing and analyzing spot oil price data.
+It loads data from spot_oil_prices.json, filters specifically for WTI Crude Oil prices,
+and prepares the data for analysis and visualization.
+
+Key functions:
+- load_data: Loads JSON data from a specified file path
+- filter_wti_data: Extracts only WTI Crude Oil spot price data
+- get_spot_data: Main function that processes the data into a pandas DataFrame,
+                calculates daily price changes, and prepares it for analysis
+
+This module is used by various analysis scripts to provide consistent data processing
+for spot oil price analysis throughout the project.
+"""
+
 import json
 import pandas as pd
 from pathlib import Path
@@ -23,12 +40,12 @@ def get_spot_data(data_path=None):
     if data_path is None:
         # Get the path relative to this script's location
         script_dir = Path(__file__).resolve().parent.parent
-        spot_data_path = script_dir / "data" / "spot_data.json"
+        spot_data_path = script_dir / "data" / "spot_oil_prices.json"
     else:
         spot_data_path = Path(data_path)
     
     if not spot_data_path.exists():
-        print("Error: spot_data.json not found.")
+        print("Error: spot_oil_prices.json not found.")
         return None
     
     data = load_data(spot_data_path)

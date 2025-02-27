@@ -51,11 +51,11 @@ def main():
     data_dir.mkdir(exist_ok=True)
     
     # Define the output path
-    output_path = data_dir / 'spot_data.json'
+    output_path = data_dir / 'spot_oil_prices.json'
     
     # Check if file already exists
     if output_path.exists():
-        print("spot_data.json already exists. Skipping data fetch.")
+        print("spot_oil_prices.json already exists. Skipping data fetch.")
         return
     
     # Fetch data from EIA API
