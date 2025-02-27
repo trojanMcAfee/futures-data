@@ -14,6 +14,15 @@ from datetime import datetime
 # Disable SSL Warnings
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
+def _should_print():
+    """Helper function to determine if we should print output"""
+    return __name__ == "__main__"
+
+def _print_if_main(*args, **kwargs):
+    """Only print if this is the main module being run"""
+    if _should_print():
+        print(*args, **kwargs)
+
 def contractSearch():
     base_url = "https://localhost:5000/v1/api/"
     endpoint = "iserver/secdef/search"
@@ -47,7 +56,7 @@ def contractSearch():
             filtered_results.append(filtered_contract)
     
     contract_json = json.dumps(filtered_results, indent=2)
-    print(f"Search Results for MCL Futures:\n{contract_json}")
+    _print_if_main(f"Search Results for MCL Futures:\n{contract_json}")
     
     # Find the base contract ID
     base_conid = None
@@ -66,13 +75,13 @@ def contractSearch():
             break
     
     if not base_conid or not months_list:
-        print("Warning: Could not find a valid MCL futures contract or available months")
+        _print_if_main("Warning: Could not find a valid MCL futures contract or available months")
         return None
     
     # Get the nearest month (first in the list, which should be the nearest)
     nearest_month = months_list[0]
-    print(f"Found base contract ID: {base_conid}")
-    print(f"Nearest contract month: {nearest_month}")
+    _print_if_main(f"Found base contract ID: {base_conid}")
+    _print_if_main(f"Nearest contract month: {nearest_month}")
     
     # Now get the specific contract ID for this month
     month_endpoint = "iserver/secdef/info"
@@ -91,20 +100,20 @@ def contractSearch():
         if isinstance(month_data, list) and len(month_data) > 0:
             # Some APIs return a list of contracts
             near_month_conid = month_data[0].get('conid')
-            print(f"Found near-month contract ID: {near_month_conid}")
+            _print_if_main(f"Found near-month contract ID: {near_month_conid}")
             return near_month_conid
         elif isinstance(month_data, dict) and 'data' in month_data:
             # Some APIs nest the data
             near_month_conid = month_data.get('data', [{}])[0].get('conid')
-            print(f"Found near-month contract ID: {near_month_conid}")
+            _print_if_main(f"Found near-month contract ID: {near_month_conid}")
             return near_month_conid
     except Exception as e:
-        print(f"Error processing month data: {e}")
-        print(f"Raw response: {month_req.text}")
+        _print_if_main(f"Error processing month data: {e}")
+        _print_if_main(f"Raw response: {month_req.text}")
     
     # If we couldn't find the near-month contract dynamically,
     # use the currently working ID as a fallback (but log a warning)
-    print("Warning: Falling back to known contract ID (661016520)")
+    _print_if_main("Warning: Falling back to known contract ID (661016520)")
     return 661016520
 
 def getContractDetails(conid):
@@ -113,7 +122,7 @@ def getContractDetails(conid):
     
     details_req = requests.get(url=base_url+endpoint, verify=False)
     details_json = json.dumps(details_req.json(), indent=2)
-    print(f"\nContract Details for {conid}:\n{details_json}")
+    _print_if_main(f"\nContract Details for {conid}:\n{details_json}")
 
 if __name__ == "__main__":
     near_month_conid = contractSearch() 

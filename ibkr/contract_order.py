@@ -1,23 +1,23 @@
 import requests
 import json
 import urllib3
-from contract_search import searchContract
+from contract_details import contractSearch
 
 # Disable SSL Warnings
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 def placeOrder(conid):
     base_url = "https://localhost:5000/v1/api/"
-    endpoint = "iserver/account/DUH210440/orders"  # Using the account from the screenshot
+    endpoint = "iserver/account/DUH210440/orders" 
 
-    # Order parameters - matching exactly the format from the screenshot
+    # Order parameters 
     json_body = {
         "orders": [{
-            "conid": int(conid),  # Convert to integer
+            "conid": int(conid),  
             "orderType": "MKT",
-            "side": "SELL",
+            "side": "BUY",
             "tif": "DAY",
-            "quantity": 3
+            "quantity": 1
         }]
     }
 
@@ -103,10 +103,10 @@ def confirmOrder(reply_id):
 if __name__ == "__main__":
     print("Starting order submission sequence...")
     print("\nStep 1: Getting contract ID...")
-    conid = searchContract()
+    conid = contractSearch()
     
     if not conid:
-        print("\nError: Could not find contract ID for MCL March 2025")
+        print("\nError: Could not find contract ID")
         exit(1)
     
     print(f"\nFound contract ID: {conid}")
