@@ -14,7 +14,7 @@ def getContractInfo(conid):
     params = {
         "conid": conid,
         "sectype": "FUT",
-        "month": "MAR25",
+        "month": "APR25",
         "exchange": "NYMEX"
     }
 

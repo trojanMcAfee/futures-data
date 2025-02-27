@@ -13,7 +13,7 @@ def searchContract():
     search_body = {
         "symbol": "MCL",
         "secType": "FUT",
-        "month": "MAR25",
+        "month": "APR25",
         "exchange": "NYMEX"
     }
 
@@ -32,7 +32,7 @@ def searchContract():
             for contract in search_json:
                 if (contract.get('symbol') == 'MCL' and 
                     any(section.get('secType') == 'FUT' and 
-                        'MAR25' in section.get('months', '') 
+                        'APR25' in section.get('months', '') 
                         for section in contract.get('sections', []))):
                     base_conid = contract.get('conid')
                     break
@@ -45,7 +45,7 @@ def searchContract():
         params = {
             "conid": base_conid,
             "sectype": "FUT",
-            "month": "MAR25",
+            "month": "APR25",
             "exchange": "NYMEX"
         }
         
