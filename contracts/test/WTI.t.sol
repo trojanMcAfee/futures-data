@@ -183,7 +183,7 @@ contract WTITest is Test {
         IUniswapV3Pool pool = IUniswapV3Pool(poolAddress);
         
         // Amount of WTI to swap (10 WTI)
-        uint256 amountIn = 10 * 10**wti.decimals();
+        uint256 amountIn = 85 * 10**wti.decimals();
         
         // Log the deployer's token balances before the swap
         console.log("Deployer token balances before swap:");
