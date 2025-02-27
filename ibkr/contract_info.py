@@ -1,7 +1,7 @@
+from contract_details import contractSearch
 import requests
 import json
 import urllib3
-from contract_search import searchContract
 
 # Disable SSL Warnings
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -39,9 +39,9 @@ def getContractInfo(conid):
 if __name__ == "__main__":
     print("Starting contract information retrieval sequence...")
     print("\nStep 1: Searching for contract...")
-    conid = searchContract()
+    conid = contractSearch()
     if conid:
         print(f"\nFound contract ID: {conid}")
-        getContractInfo(conid)
+        getContractInfo(500567051)
     else:
         print("\nNo matching contract found") 

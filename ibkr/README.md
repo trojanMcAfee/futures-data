@@ -50,7 +50,7 @@ This directory contains several Python scripts for interacting with the IBKR API
 
 - `auth_status.py` - Check the authentication status of the gateway
 - `acctSummary.py` - Retrieve account summary information
-- `contract_details.py` - Get details about financial contracts
+- `contract_details.py` - Retrieves information about Micro WTI Crude Oil (MCL) futures contracts on NYMEX. It identifies the base contract (conid: 500567051) and dynamically determines the near-month futures contract for trading, filtering results to show only futures (FUT) contracts.
 - `contract_info.py` - Get information about financial contracts
 - `contract_order.py` - Place orders for financial contracts
 - `contract_search.py` - Search for financial contracts
