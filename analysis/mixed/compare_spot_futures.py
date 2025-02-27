@@ -17,10 +17,10 @@ def get_spot_data():
     
     # Navigate up two levels to the project root and get data directory
     data_dir = script_dir.parent.parent / 'data'
-    spot_data_path = data_dir / 'spot_data.json'
+    spot_data_path = data_dir / 'spot_oil_prices.json'
     
     if not spot_data_path.exists():
-        print("Error: spot_data.json not found. Please run fetch_eia_data.py first.")
+        print("Error: spot_oil_prices.json not found.")
         return None
     
     data = load_data(spot_data_path)
@@ -47,10 +47,10 @@ def get_futures_data():
     
     # Navigate up two levels to the project root and get data directory
     data_dir = script_dir.parent.parent / 'data'
-    futures_data_path = data_dir / 'output.json'
+    futures_data_path = data_dir / 'futures_oil_prices.json'
     
     if not futures_data_path.exists():
-        print("Error: output.json not found.")
+        print("Error: futures_oil_prices.json not found.")
         return None
     
     data = load_data(futures_data_path)
