@@ -193,12 +193,8 @@ contract Helpers is Test {
     }
     
     function logPoolState(
-        address poolAddress, 
-        IUniswapV3Pool pool
-    ) public view {
-        // Get the pool's current state
-        (uint160 updatedSqrtPriceX96,,,,,,) = pool.slot0();
-                
+        address poolAddress
+    ) public view {        
         // Get token balances in the pool
         uint256 wtiBalance = IERC20(address(wti)).balanceOf(poolAddress);
         uint256 usdcBalance = IERC20(USDC).balanceOf(poolAddress);
