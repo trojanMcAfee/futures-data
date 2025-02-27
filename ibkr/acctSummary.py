@@ -1,6 +1,7 @@
 import requests
 import json
 import urllib3
+from contract_details import contractSearch
 
 # Disable SSL Warnings
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -63,13 +64,19 @@ def acctPos():
         print(f"\nError parsing JSON response: {e}")
         return None
 
-def acctPosSingle(conid=661016571):
+def acctPosSingle():
+    conid = contractSearch()
+    
     base_url = "https://localhost:5000/v1/api/"
     endpoint = f"portfolio/DUH210440/position/{conid}"
     
     request_url = f"{base_url}{endpoint}"
     print(f"\nQuerying position details for conid {conid}...")
     print("Making request to URL:", request_url)
+
+    print("--------------------------------")
+    print("--------------------------------")
+    print("--------------------------------")
     
     try:
         pos_req = requests.get(url=request_url, verify=False)
