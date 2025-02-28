@@ -49,7 +49,27 @@ This script will make a request to the gateway's authentication status endpoint 
 This directory contains several Python scripts for interacting with the IBKR API:
 
 - `auth_status.py` - Check the authentication status of the gateway
-- `acctSummary.py` - Retrieve account summary information
+- `acctSummary.py` - Retrieve account summary information. Output includes values with suffixes that indicate different account segments:
+  - `-c`: Commodities segment (futures, options on futures)
+  - `-s`: Securities segment (stocks, ETFs, options on stocks)
+  
+  Example output snippet:
+  ```json
+  {
+    "availablefunds": {
+      "amount": 828217.375,
+      "currency": "USD"
+    },
+    "availablefunds-c": {
+      "amount": 584364.625,
+      "currency": "USD"
+    },
+    "availablefunds-s": {
+      "amount": 243852.71875,
+      "currency": "USD"
+    }
+  }
+  ```
 - `contract_details.py` - Retrieves information about Micro WTI Crude Oil (MCL) futures contracts on NYMEX. It identifies the base contract (conid: 500567051) and dynamically determines the near-month futures contract for trading, filtering results to show only futures (FUT) contracts.
 - `contract_order.py` - Place orders for financial contracts
 - `mixed.py` - Mixed API functionality examples
