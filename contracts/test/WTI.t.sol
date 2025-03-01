@@ -178,9 +178,6 @@ contract WTITest is Test {
         // Parse the output to get sqrtPriceX96 and targetPrice using helpers
         (uint160 sqrtPriceX96, uint256 targetPrice) = helpers.parseOutput(output);
         
-        console.log("Dynamic sqrtPriceX96:", uint256(sqrtPriceX96));
-        console.log("Dynamic targetPrice:", targetPrice);
-        
         // Create the WTIPoolCreator instance
         WTIPoolCreator poolCreator = new WTIPoolCreator(
             address(wti),

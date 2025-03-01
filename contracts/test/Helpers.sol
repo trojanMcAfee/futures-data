@@ -326,15 +326,9 @@ contract Helpers is Test {
         string memory sqrtPriceStr = substring(lastLine, 0, commaPos);
         string memory targetPriceStr = substring(lastLine, commaPos + 1, lastLineBytes.length - commaPos - 1);
         
-        console.log("Extracted sqrtPriceX96 string:", sqrtPriceStr);
-        console.log("Extracted targetPrice string:", targetPriceStr);
-        
         // Convert strings to integers
         sqrtPriceX96 = uint160(stringToUint(sqrtPriceStr));
         targetPrice = stringToUint(targetPriceStr);
-        
-        console.log("Parsed sqrtPriceX96:", uint256(sqrtPriceX96));
-        console.log("Parsed targetPrice:", targetPrice);
     }
     
     /**
