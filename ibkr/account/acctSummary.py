@@ -1,7 +1,12 @@
 import requests
 import json
 import urllib3
-from contract_details import contractSearch
+import sys
+import os
+
+# Add the parent directory to the system path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from contract.details import contractSearch
 
 # Disable SSL Warnings
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)

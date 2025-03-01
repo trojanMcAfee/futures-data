@@ -1,7 +1,7 @@
 import requests
 import json
 import urllib3
-from contract_details import contractSearch
+from details import contractSearch
 
 # Disable SSL Warnings
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
