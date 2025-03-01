@@ -12,6 +12,7 @@ import {FullMath} from "../lib/v3-core/contracts/libraries/FullMath.sol";
 import {IERC20} from "../src/interfaces/IERC20.sol";
 import {INonfungiblePositionManager} from "../src/interfaces/INonfungiblePositionManager.sol";
 import {WTILiquidityProvider} from "../src/WTILiquidityProvider.sol";
+import {WTIPoolCreator} from "../src/WTIPoolCreator.sol";
 import {Helpers} from "./Helpers.sol";
 
 
@@ -113,41 +114,34 @@ contract WTITest is Test {
         // Ensure WTI has some initial liquidity
         require(wti.balanceOf(deployer) > 0, "No WTI balance");
         
-        // Create pool with WTI and USDC
-        address poolAddress = factory.createPool(address(wti), USDC, fee);
-        IUniswapV3Pool pool = IUniswapV3Pool(poolAddress);
-        
-        // Verify token ordering (WTI is token0, USDC is token1)
-        address token0 = pool.token0();
-        address token1 = pool.token1();
-        assertEq(token0, address(wti), "WTI should be token0");
-        assertEq(token1, USDC, "USDC should be token1");
-        
         // Target price: 70.415 USDC per WTI
         uint256 targetPrice = 70415000; // 70.415 * 1e6
         uint160 sqrtPriceX96 = 664832398952738400000000;
         
-        // Log the initial sqrtPriceX96 value
-        console.log("Initial sqrtPriceX96:", uint256(sqrtPriceX96));
+        // Create the WTIPoolCreator instance
+        WTIPoolCreator poolCreator = new WTIPoolCreator(
+            address(wti),
+            USDC,
+            address(factory),
+            fee,
+            targetPrice,
+            sqrtPriceX96
+        );
         
-        // Initialize the pool with the calculated sqrtPriceX96
-        pool.initialize(sqrtPriceX96);
+        // Create and initialize the pool
+        address poolAddress = poolCreator.createAndInitializePool();
+        IUniswapV3Pool pool = IUniswapV3Pool(poolAddress);
         vm.stopPrank();
         
         // Get the current price from the pool
         (uint160 currentSqrtPriceX96,,,,,,) = pool.slot0();
         
         // Calculate price from sqrtPriceX96 using FullMath for precision
-        // For token0 = WTI (18 decimals) and token1 = USDC (6 decimals): 
         uint256 calculatedPrice = helpers.calculateWTIprice(currentSqrtPriceX96);
-
-        // Log the calculated price
-        console.log("WTI price in USDC (with 6 decimals):", calculatedPrice);
         
         // Verify the price is within an acceptable range
         assertApproxEqAbs(calculatedPrice, targetPrice, targetPrice / 100); // Allow 1% deviation
-
-        console.log('--------------------------------');
+        
         console.log('--------------------------------');
     }
 
