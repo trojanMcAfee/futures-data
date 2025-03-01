@@ -204,6 +204,50 @@ contract WTITest is Test {
         
         console.log('--------------------------------');
     }
+    
+    function test_AddRealLiquidityWTI() public {
+        // First create the pool with real WTI price
+        test_CreateRealWTIPool();
+        
+        // Get the pool address and prepare for adding liquidity
+        (address poolAddress, IUniswapV3Pool pool, address liquidityProvider) = helpers.setupForLiquidity();
+        
+        // Calculate token amounts for 50/50 split with 200,000 USDC
+        uint256 usdcLiquidityAmount = 200000 * 1e6; // 200,000 USDC with 6 decimals
+        (uint256 usdcAmount, uint256 wtiAmount) = helpers.calculateLiquidityAmounts(pool, usdcLiquidityAmount);
+        
+        // Since we need more WTI tokens, mint additional tokens to the deployer if needed
+        vm.startPrank(deployer);
+        uint256 currentWtiBalance = wti.balanceOf(deployer);
+        if (currentWtiBalance < wtiAmount) {
+            // For testing purposes, we'll just mint more tokens to the deployer
+            // In a real scenario, this would be handled differently
+            vm.stopPrank();
+            // Get WTI contract owner
+            address owner = deployer; // Assuming deployer is the owner
+            vm.startPrank(owner);
+            // Mint additional tokens to cover the required amount
+            wti.mint(deployer, wtiAmount - currentWtiBalance);
+            vm.stopPrank();
+            vm.startPrank(deployer);
+        }
+        vm.stopPrank();
+        
+        // Fund the liquidity provider with tokens
+        helpers.fundLiquidityProvider(liquidityProvider, usdcAmount, wtiAmount);
+        
+        // Add liquidity to the pool
+        helpers.addLiquidityToPool(liquidityProvider, usdcAmount, wtiAmount);
+        
+        // Log the results
+        helpers.logPoolState(poolAddress);
+        
+        console.log('--------------------------------');
+        console.log('Added Real Liquidity to WTI/USDC Pool');
+        console.log('USDC Amount:', usdcAmount / 1e6, 'USDC');
+        console.log('WTI Amount:', wtiAmount / 1e18, 'WTI');
+        console.log('--------------------------------');
+    }
 
     function test_AddLiquidityToPool() public {
         // First create the pool
@@ -212,8 +256,9 @@ contract WTITest is Test {
         // Get the pool address and prepare for adding liquidity
         (address poolAddress, IUniswapV3Pool pool, address liquidityProvider) = helpers.setupForLiquidity();
         
-        // Calculate token amounts for 50/50 split
-        (uint256 usdcAmount, uint256 wtiAmount) = helpers.calculateLiquidityAmounts(pool);
+        // Calculate token amounts for 50/50 split with 30,000 USDC
+        uint256 usdcLiquidityAmount = 30000 * 1e6; // 30,000 USDC with 6 decimals
+        (uint256 usdcAmount, uint256 wtiAmount) = helpers.calculateLiquidityAmounts(pool, usdcLiquidityAmount);
         
         // Fund the liquidity provider with tokens
         helpers.fundLiquidityProvider(liquidityProvider, usdcAmount, wtiAmount);

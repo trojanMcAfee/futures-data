@@ -62,13 +62,13 @@ contract Helpers is Test {
         return (poolAddress, pool, liquidityProvider);
     }
     
-    function calculateLiquidityAmounts(IUniswapV3Pool pool) public view returns (uint256 usdcAmount, uint256 wtiAmount) {
+    function calculateLiquidityAmounts(IUniswapV3Pool pool, uint256 inputUsdcAmount) public view returns (uint256 usdcAmount, uint256 wtiAmount) {
         // Get the current price to calculate the WTI/USDC ratio
         (uint160 currentSqrtPriceX96,,,,,,) = pool.slot0();
         uint256 wtiPrice = calculateWTIprice(currentSqrtPriceX96);
         
-        // Define the USDC amount to add as liquidity
-        usdcAmount = 30000 * 1e6; // 30,000 USDC with 6 decimals
+        // Use the input USDC amount
+        usdcAmount = inputUsdcAmount;
         
         // Calculate the WTI amount for 50/50 split
         // For a 50/50 split at price p, we need: 
@@ -78,6 +78,12 @@ contract Helpers is Test {
         wtiAmount = (usdcAmount * 1e18) / wtiPrice; // Converting to 18 decimals
         
         return (usdcAmount, wtiAmount);
+    }
+    
+    // Add an overloaded version of the function for backward compatibility
+    function calculateLiquidityAmounts(IUniswapV3Pool pool) public view returns (uint256 usdcAmount, uint256 wtiAmount) {
+        // Default to 30,000 USDC if no amount is provided
+        return calculateLiquidityAmounts(pool, 30000 * 1e6);
     }
     
     function fundLiquidityProvider(address liquidityProvider, uint256 usdcAmount, uint256 wtiAmount) public {
