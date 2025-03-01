@@ -112,12 +112,12 @@ def display_price_info(market_data):
         market_data (list/dict): Market data response from the IBKR API
         
     Returns:
-        float: The last price if available, or 70415000 if 'N/A'
+        float: The last price if available, or 70.415 if 'N/A'
     """
     if not market_data:
         print("No market data available to display.")
-        print("Using default price value: 70415000")
-        return 70415000
+        print("Using default price value: 70.415")
+        return 70.415
     
     # First check market data availability
     availability_info = check_market_data_availability(market_data)
@@ -169,8 +169,8 @@ def display_price_info(market_data):
             print("1. Check your market data subscriptions in IBKR Trader Workstation")
             print("2. Verify the contract is still active")
             print("3. Try restarting the IBKR Gateway")
-            print("\nUsing default price value: 70415000")
-            return 70415000
+            print("\nUsing default price value: 70.415")
+            return 70.415
         
         # Convert last_price to float if it's not 'N/A'
         if last_price != 'N/A':
@@ -178,16 +178,16 @@ def display_price_info(market_data):
                 return float(last_price)
             except (ValueError, TypeError):
                 print(f"Warning: Could not convert last_price '{last_price}' to float")
-                print("Using default price value: 70415000")
-                return 70415000
+                print("Using default price value: 70.415")
+                return 70.415
         else:
             print("Last price value is 'N/A'")
-            print("Using default price value: 70415000")
-            return 70415000
+            print("Using default price value: 70.415")
+            return 70.415
     else:
         print("Market data format unexpected:", json.dumps(market_data, indent=2))
-        print("Using default price value: 70415000")
-        return 70415000
+        print("Using default price value: 70.415")
+        return 70.415
 
 def get_gateway_status():
     """
@@ -219,7 +219,7 @@ def get_last_price():
     Get the last price of the near-month futures contract.
     
     Returns:
-        float: The last price if available, or 70415000 as default value
+        float: The last price if available, or 70.415 as default value
     """
     print("Starting price check for near-month futures contract...")
     
@@ -232,13 +232,13 @@ def get_last_price():
         
         if not gateway_status.get('authenticated', False):
             print("\nERROR: Not authenticated with IBKR Gateway. Please log in to IBKR Trader Workstation or IBKR Gateway.")
-            print("\nUsing default price value: 70415000")
-            return 70415000
+            print("\nUsing default price value: 70.415")
+            return 70.415
         
         if not gateway_status.get('connected', False):
             print("\nERROR: Not connected to IBKR Gateway. Please ensure IBKR Trader Workstation or IBKR Gateway is running.")
-            print("\nUsing default price value: 70415000")
-            return 70415000
+            print("\nUsing default price value: 70.415")
+            return 70.415
     
     # Get the near-month contract ID
     print("\nStep 1: Identifying near-month futures contract...")
@@ -246,8 +246,8 @@ def get_last_price():
     
     if not conid:
         print("\nError: Could not find contract ID")
-        print("Using default price value: 70415000")
-        return 70415000
+        print("Using default price value: 70.415")
+        return 70.415
     
     print(f"\nFound near-month contract ID: {conid}")
     
@@ -258,7 +258,7 @@ def get_last_price():
     # Display the price information and get the last price
     last_price = display_price_info(market_data)
     
-    # Since display_price_info now always returns a value (either actual price or 70415000),
+    # Since display_price_info now always returns a value (either actual price or 70.415),
     # we don't need to check for None anymore
     print(f"\nUsing price: ${last_price}")
     

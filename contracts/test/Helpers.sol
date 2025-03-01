@@ -277,4 +277,113 @@ contract Helpers is Test {
             z = (y + (x / y)) >> 1;
         }
     }
+    
+    /**
+     * @dev Helper function to parse the output from the Python script
+     * @param output String output from the Python script (format: "sqrtPriceX96,targetPrice")
+     * @return sqrtPriceX96 The parsed sqrtPriceX96 value
+     * @return targetPrice The parsed targetPrice value
+     */
+    function parseOutput(string memory output) public pure returns (uint160 sqrtPriceX96, uint256 targetPrice) {
+        // Extract the final line which contains the comma-separated values
+        bytes memory outputBytes = bytes(output);
+        
+        // Find the last line by starting from the end and looking for the last newline
+        uint256 lastNewLinePos = outputBytes.length; // Start at the end
+        for (int i = int(outputBytes.length) - 1; i >= 0; i--) {
+            if (outputBytes[uint(i)] == bytes1('\n')) {
+                lastNewLinePos = uint(i) + 1; // Position after the newline
+                break;
+            }
+        }
+        
+        // Extract just the last line (which should be "sqrtPriceX96,targetPrice")
+        string memory lastLine;
+        if (lastNewLinePos < outputBytes.length) {
+            lastLine = substring(output, lastNewLinePos, outputBytes.length - lastNewLinePos);
+        } else {
+            lastLine = output; // No newline found, use the entire output
+        }
+        
+        console.log("Last line extracted:", lastLine);
+        
+        // Find the comma position in the last line
+        uint256 commaPos;
+        bytes memory lastLineBytes = bytes(lastLine);
+        
+        bool commaFound = false;
+        for (uint i = 0; i < lastLineBytes.length; i++) {
+            if (lastLineBytes[i] == bytes1(',')) {
+                commaPos = i;
+                commaFound = true;
+                break;
+            }
+        }
+        
+        require(commaFound, "Invalid output format: comma not found");
+        
+        // Extract the substrings before and after the comma
+        string memory sqrtPriceStr = substring(lastLine, 0, commaPos);
+        string memory targetPriceStr = substring(lastLine, commaPos + 1, lastLineBytes.length - commaPos - 1);
+        
+        console.log("Extracted sqrtPriceX96 string:", sqrtPriceStr);
+        console.log("Extracted targetPrice string:", targetPriceStr);
+        
+        // Convert strings to integers
+        sqrtPriceX96 = uint160(stringToUint(sqrtPriceStr));
+        targetPrice = stringToUint(targetPriceStr);
+        
+        console.log("Parsed sqrtPriceX96:", uint256(sqrtPriceX96));
+        console.log("Parsed targetPrice:", targetPrice);
+    }
+    
+    /**
+     * @dev Helper function to extract a substring
+     * @param str The input string
+     * @param startIndex The starting index (inclusive)
+     * @param length The length of the substring
+     * @return The extracted substring
+     */
+    function substring(string memory str, uint startIndex, uint length) public pure returns (string memory) {
+        bytes memory strBytes = bytes(str);
+        require(startIndex + length <= strBytes.length, "Out of bounds");
+        
+        bytes memory result = new bytes(length);
+        for (uint i = 0; i < length; i++) {
+            result[i] = strBytes[startIndex + i];
+        }
+        
+        return string(result);
+    }
+    
+    /**
+     * @dev Helper function to convert a string to uint
+     * @param s The input string
+     * @return The parsed uint value
+     */
+    function stringToUint(string memory s) public pure returns (uint256) {
+        bytes memory b = bytes(s);
+        uint256 result = 0;
+        
+        for (uint i = 0; i < b.length; i++) {
+            uint8 c = uint8(b[i]);
+            if (c >= 48 && c <= 57) {
+                // Check for overflow before multiplying by 10
+                if (result > type(uint256).max / 10) {
+                    // If we would overflow, return the max value
+                    return type(uint256).max;
+                }
+                result = result * 10;
+                
+                // Check for overflow before adding the digit
+                if (result > type(uint256).max - (c - 48)) {
+                    // If we would overflow, return the max value
+                    return type(uint256).max;
+                }
+                result = result + (c - 48);
+            }
+        }
+        
+        return result;
+    }
 } 

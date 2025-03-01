@@ -28,8 +28,8 @@ def calculate_sqrtPriceX96(last_price):
     Returns:
         int: The calculated sqrtPriceX96 value
     """
-    # Convert the last price to market_price by dividing by 1e6
-    market_price = last_price / 1e6
+    # Convert the last price to market_price
+    market_price = last_price
     
     # Apply the formula: sqrt((market_price * 10^6) / (10^18)) * 2^96
     # Simplifies to: sqrt(market_price / 10^12) * 2^96
@@ -44,37 +44,43 @@ def get_sqrtPriceX96():
     Get the last price and calculate sqrtPriceX96.
     
     Returns:
-        int/None: The calculated sqrtPriceX96 value or None if unable to get price
+        tuple: (sqrtPriceX96, targetPrice) where targetPrice is market_price * 10^6
     """
     # Get the last price from IBKR
     last_price = get_last_price()
     
     if last_price is None:
         print("Error: Unable to get last price from IBKR")
-        return None
+        return None, None
     
     print(f"Retrieved last price: ${last_price}")
     
-    # Calculate market_price (last_price / 1e6)
-    market_price = last_price / 1e6
+    # Calculate market_price (last_price)
+    market_price = last_price
     print(f"Calculated market_price: ${market_price}")
+    
+    # Convert to target price (multiply by 10^6 for USDC decimals)
+    target_price = int(market_price * 10**6)
+    print(f"Calculated targetPrice: {target_price}")
     
     # Calculate sqrtPriceX96
     sqrtPriceX96 = calculate_sqrtPriceX96(last_price)
     print(f"Calculated sqrtPriceX96: {sqrtPriceX96}")
     
-    return sqrtPriceX96
+    return sqrtPriceX96, target_price
 
 if __name__ == "__main__":
-    sqrtPriceX96 = get_sqrtPriceX96()
+    sqrtPriceX96, target_price = get_sqrtPriceX96()
     
-    if sqrtPriceX96 is None:
-        print("Failed to calculate sqrtPriceX96")
+    if sqrtPriceX96 is None or target_price is None:
+        print("Failed to calculate values")
         sys.exit(1)
     
-    # Print the final result
+    # Print the final results
     print(f"\nFinal sqrtPriceX96: {sqrtPriceX96}")
+    print(f"Final targetPrice: {target_price}")
     
-    # Return the calculated value
-    print(sqrtPriceX96)
+    # Return both values in a format that can be parsed by the Solidity FFI
+    # Format: sqrtPriceX96,targetPrice
+    print(f"{sqrtPriceX96},{target_price}")
     sys.exit(0) 

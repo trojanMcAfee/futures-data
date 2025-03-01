@@ -145,6 +145,69 @@ contract WTITest is Test {
         console.log('--------------------------------');
     }
 
+    function test_CreateRealWTIPool() public {
+        // Fork Ethereum mainnet at a recent block
+        vm.createSelectFork(vm.envString("MAINNET_RPC_URL"));
+        
+        // Deploy WTI token again on the forked network
+        vm.startPrank(deployer);
+        wti = new WTI();
+        
+        // Reinitialize helpers with the new WTI instance
+        helpers = new Helpers(
+            wti,
+            deployer,
+            USDC,
+            fee,
+            factory,
+            nonFungiblePositionManager
+        );
+        
+        // Ensure WTI has some initial liquidity
+        require(wti.balanceOf(deployer) > 0, "No WTI balance");
+        
+        // Use vm.ffi() to call the Python script and get dynamic values
+        string[] memory inputs = new string[](2);
+        inputs[0] = "python";
+        inputs[1] = "../ibkr/sqrtprice_calculator.py";
+        
+        // Call the Python script and get its output
+        bytes memory result = vm.ffi(inputs);
+        string memory output = string(result);
+        
+        // Parse the output to get sqrtPriceX96 and targetPrice using helpers
+        (uint160 sqrtPriceX96, uint256 targetPrice) = helpers.parseOutput(output);
+        
+        console.log("Dynamic sqrtPriceX96:", uint256(sqrtPriceX96));
+        console.log("Dynamic targetPrice:", targetPrice);
+        
+        // Create the WTIPoolCreator instance
+        WTIPoolCreator poolCreator = new WTIPoolCreator(
+            address(wti),
+            USDC,
+            address(factory),
+            fee,
+            targetPrice,
+            sqrtPriceX96
+        );
+        
+        // Create and initialize the pool
+        address poolAddress = poolCreator.createAndInitializePool();
+        IUniswapV3Pool pool = IUniswapV3Pool(poolAddress);
+        vm.stopPrank();
+        
+        // Get the current price from the pool
+        (uint160 currentSqrtPriceX96,,,,,,) = pool.slot0();
+        
+        // Calculate price from sqrtPriceX96 using FullMath for precision
+        uint256 calculatedPrice = helpers.calculateWTIprice(currentSqrtPriceX96);
+        
+        // Verify the price is within an acceptable range
+        assertApproxEqAbs(calculatedPrice, targetPrice, targetPrice / 100); // Allow 1% deviation
+        
+        console.log('--------------------------------');
+    }
+
     function test_AddLiquidityToPool() public {
         // First create the pool
         test_CreateUniswapV3Pool();
